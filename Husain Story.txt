@@ -1,0 +1,85 @@
+I started my journey in corporate by first taking a job at Vertex Pharmaceuticals. I started as a co-op, coming from Northeastern University to work for a medical device that we were developing within the process engineering team. The role of our team was to take processes from R&D, make them scalable, GMP compliant and ready for manufacturing. I cannot tell you much about the medical device that you are working on but what I can tell you is what is available through patents. It is a unique one of its kind, extremely delicate class 3 medical device that is being implanted into patients which contain islet cells which regulate glucose in humans. However due to unfavorable clinical results, our organization had to undergo restructuring and in lieu of that I am looking for further opportunities to propel my career forward, 
+I have been the in house expert and lead for computer vision data analytics and software development at the Providence location and led several projects. When I first joined Vertex as a co-op, I invested most of my first month networking cross functionally and learn the gaps that we have at the process. One of the key things that I learned during this time was data from different equipment was not available at fingertips for engineers to use access, analyze and bring about scientific reasoning which is backed by data. I developed end-to-end pipelines collecting information from equipment reprocessing it performing data engineering on it creating visualization and analysis tools which within the first two months of deployment help us save 1 million dollars annually. The tool helped us find equipment errors and upon fixing it we increase our production yields by over 10%. Overtime the stool has also helped in resolution of critical directly preventing product waste and ensuring timely product release. This tool has been the backbone of many as it provided data at users fingertips I used python for data extraction, cleaning and transformation and used power bi with python code for visualization and analysis. Also used sci-kit learn to train models which could predict future failure of device. 
+
+Upon successful completion of the above project one of the key pain points for the manufacturing operators Wars one of the process where operators would manually inspect the part with their Naked Eyes background in computer vision I wanted to automate this process where I wanted to put a camera in front of the medical device which would enable us to inspect the device without human error and biases. This inspection was a particularly challenging one as inspected the medical device while submerged in liquid this caused bubbles into the liquid and would stick at the medical devices. When the device was submerged in the liquid it would turn translucent and we used computer version to successfully detect any air bubbles onto the surface of the medical device, air pockets present in the medical device and regions which failed for the translucency. I felt really proud of this accomplishment because I first implemented the entire code using a GoPro camera and used python for implementation and upon successful proof of concept i was working with Matrox design assistant and industrial machine vision equipment to successfully deliver the project by managing it with our vendor for delivery. We used the Bassler 128MP camera and in the interim were using a Keyence 64Mp camera to run the python script. This also provided a quantitative data metric as against a qualitative pass fail as performed by operators. 
+
+Computer vision being one of my favorite topic I was also responsible for a couple of other Machine Vision based projects where in one of the projects I was responsible to spec out an entire Vision system for a sterile class 5 ISO clean room environment to check the device before, after and during the cell fill. Use traditional computer vision algorithms along with Tensor flow to successfully determine regions that are filled or unfilled. Upon successful filling this algorithm was also responsible for release of the product For this we used Lucid Vision cameras.
+
+Another project that I worked on was AI powered defect classification model for release of our device before the filling operation we used PyTorch and TensorFlow leading to a 60% Improvement in the existing defect detection for the GMP clean room environment we had 17 defects that the software was able to successfully detect my role.
+
+One key opportunity that I saw at Vertex was to build a custom in house MES/ ERP system. This is because we had constant changes that were being delivered from the R&D and going into production it was very difficult for a validated piece of traditional MES system. We wanted something that was much more agile and I designed and deployed a full stack software for 200 plus users using node.js web socket and sequel enabling end to end genealogy and traceability Reporting across multi-state manufacturing reducing manual data request by around 80%. This MES system also served as am electronic DHR and I connected equipment directly to the software to save operator input and transcription errors caused by them. I design real-time response services to store CTQ's, product history and audit logs and enable full manufacturing feasibility for compliance and GMP reporting. 
+
+During my time I also built develop and managed SharePoint pages to centralize and collaborative documentation across CMC teams. This improved information accessibility cross functionally drastically and provided visibility. Also revised maintain more than 20 work instructions and SOP's during my time.
+
+My first manager at Vertex was Mark Ellis whom i reported for 1 year during my co-op. He was an excellent manager and would let me work on whatever i would bring to him. He would always be impressed with what I would do and the sky was the limit. However my senior manager at that time, Sam Azer would always clip my wings. He would tell me that Husain your vision is too big, youd not be able to accomplish what you dream of, but anyways i completed what i thought of. He was the biggest micro manager i have seen at Vertex. After a year i was briefly reporting to Richard Padovana, he was a super chill guy and would let me be unstoppable. He was super fun and would always be very supportive of me. Shortly I started reporting to Carl Trant, i feel he was a gem of a person. He would always know what to speak and when. his guidance was always point on. During meetings the kind of questions he would ask would be really something i woulld be looking for. I think i learnt quite a lot from him. He would always motivate me and be very practical about all things that i would bring forward to him. AMazing guy. My leadership team consisted of Daniel winternitz who was my Associate director and Rishi Dua who was my Senior Director. I really liked Rishi as he would be of the attitude go get them all whereas Daniel was more conservative where he would not want to win big but loose small.
+
+Prior to starting my masters at Northeastern University I had co-founded a startup called Hycrux in Mumbai, India. It was completely bootstrapped and our primary revenue was through a design thinking curriculum that we had built for Middle School. We also did workshops where we thought student how to build their own 3D printers and the science and technology that goes behind building it the code that they use the designing software that they use everything was taught to them in this Workshop another revenue streams that we had was through custom 3D printing orders of did provide a lot of 3D printing materials to the film industry in Mumbai. The decision to move to united states was during covid as schools at that point in India were completely closed off and our contracts with schools were cancelled due to the pandemic. I took that as an opportunity to come pursue my passion for Robotics and propel myself further. Start up was a really fun time, since it was bootstrapped quite often family and friends would come to our workplace to help out with chores, lay ping pong, have movie nights at work, it was a great time, but we also put in 70-80 hours of work every week. I remember our first big workshop for which we were featured in Times of India (India's largest publication), i had lost my grandmother 5 days before conducting a workshop for 150 students. But yet still after finishing with all the religious work, i was at the office working double time and pulling off an all nightery at work to meet deadlines. That was the dedication we had for work and moving to newer jobs my commitment has been the same and even at Vertex Pharmaceuticals, all projects that i was working on were all initiated, and thought be me and I was super invested in it, which lead to quite a few late nights at work.
+
+Husain Gittham situated in Boston, MA. can contact me at cell phone (781) 267-3194 or gitthamhusain@outlook.com
+Professional Summary: AI-focused Data and Automation Engineer with cross-functional experience delivering machine vision, lab informatics, and data pipeline solutions in GxP pharmaceutical environments. Proven record of reducing manual workloads, driving operational efficiency, and enabling data-driven decision making through end-to-end deployment of AI/ML-powered systems
+Skills Husain has:
+AI/ML Frameworks: scikit-learn, TensorFlow, PyTorch, OpenCV, Spectral Python, NLP/OCR libraries
+Programming: C++, Python(Pandas, NumPy, SciPy. Matplotlib, Seaborn), HTML, Java Script, SQL, AWS, REST APIs
+Lab/Digital Tools: Solidworks, Fusion360, AutoCAD, Matlab, Git, ROS, ERP, MES, ELN, LIMS, Power BI, Plotly
+
+Work Experience:
+Vertex Pharmaceuticals: Process Dev. Engineering Principal Scientific Associate July 2022 – June 2025
+Computer Vision Lead / Process Analytical Technology (PAT) Lead:
+•Developed and deployed AI-powered defect classification models using PyTorch and TensorFlow for a class 3 medical device, leading to a 60% improvement in defect detection in GMP cleanroom environment
+•Designed the architecture and workflows using robust camera systems for ISO Class 5 and 7 cleanroom environments. Significant improvements were made in the image quality by 40% allowing elimination of operator and transcription errors resulting in reducing product rejection rate by 75% using AI/ML frameworks
+•Initiated and led implementation of Computer Vision solutions for equipment leveraging TensorFlow/Keras from proof of concept through design, procurement, and installation for ISO Class 5,6 and 7 GMP cleanroom environments
+
+Data Analytics Lead:
+•Engineered a first of its kind novel solution for deploying OpenCV, PyTorch and Spectral Python algorithms to preprocess and condense multi-gigabyte hyperspectral datasets into compact, analysis-ready blocks, providing automated visualizations and summary logs
+•Architectured interactive visualization tools with end-to-end data pipelines for ELN (Benchling), LIMS to help design targeted experiments and enable cross-functional teams to save $1M annually
+•Led and executed data mining initiatives to clean datasets that have led to ~10% yield improvement and facilitated root cause analysis cross-functionally. Efforts resulted in resolution of a critical CAPA, directly preventing $1.5M in product waste and ensuring product release
+
+Software Development Lead:
+•Engineered real-time data collection from equipment interfaces, resulting in a 45% reduction in manual data entry time and transcription errors by leveraging SciPy and AI/ML frameworks
+•Designed and deployed a full-stack MES/ERP software for 200+ users using Node.js, WebSocket, and SQL, enabling end-to-end genealogy and traceable reporting across multistage manufacturing, reducing manual data requests by ~ 80%.
+•Designed real-time RESTful services to store CTQs, retrieve product history and audit logs, and enable full manufacturing traceability for compliance and quality reporting
+Others:
+•Partnered with cross-functional teams to maintain and revise 20+ packaging Work Instructions and SOPs, ensuring accuracy, clarity, and compliance with quality and regulatory standards
+•Single-handedly developed and managed SharePoint pages to centralize and collaborate team documentation, improving information accessibility cross functionally
+
+
+Hycrux, Founder: Mumbai, India January 2016 - September 2021
+•Founder and manager of a 3D Printing and Design Thinking Education startup which achieved break-even point in 1 year, growing to generate steady revenue system
+•Grew the team to 10 employees and managing all facets of the company, such as designing, finance, manufacturing, technology, and planning
+•Developed and managed marketing and networking strategies. tripling the number of school contracts in 1 year
+
+Developed a Design Thinking Curriculum for Middle School April 2019 - September 2021
+•Unique teaching course developed to use 3D printing to imbibe concepts of middle school science and technology subjects having classroom teaching experience of 600+ hours
+•Implemented above curriculum successfully at 3 International Baccalaureate (IB) schools training 1000+ students, who benefited from learning Tinker Cad and Fusion 360 software
+•Manufactured kid friendly 3D Printers at 20% less cost while maintaining safety standards
+•Conducted over 50 Workshops ranging over 2-5 days for students (age 11-23) teaching principles and assembling of 3D Printers
+•400+ Students benefited from 3D printer assembly workshops, teaching core principles of autonomous machines; initiative featured in The Times of India, India’s largest newspaper distributor
+
+First Year Engineering Lab, Graduate Student Supervisor September 2021 – September 2022
+•Collaboration with students to help them design, develop and build 100+ capstone projects
+•Responsible for using power tools and machinery equipment like CNC, 3D Printers, Laser Machines, CNC
+
+Mechatronics Intern: Mahindra and Mahindra, Nashik, India June 2017 - July 2017
+•Assisted in creating an Automatic Program Selection of a Manual Spot Welding Gun
+•Resulted in partial elimination of human error of 1.76% on the selection process for spot welding and improving the overall efficiency of the assembly line
+
+Projects and Interests
+•Developed a Large Language Model (LLM)-based NLP agent to extract structured data from unstructured scientific documents, integrating visual validation layers for transparent outputs
+•Deployed and evaluated a reinforcement learning agent for Connect 4 using Deep Q-Learning and Monte Carlo Tree Search (MCTS), designing custom reward functions, neural network policies, and training via self-play to benchmark results
+•Engineered a ROS-integrated SLAM by writing low-level drivers for GPS and IMU, and fusing data from stereo cameras and inertial sensors to enable real-time 3D mapping and autonomous navigation in dynamic environments
+•Installed and maintained IR/Mobile App based Home Automation system working on Arduino for 7 clients
+•Engineered and Manufactured unicycles, retailing 25 unicycles for the community
+•Outdoor adventure leader for Jack and Hill Adventures, Mumbai, was responsible for leading trekking, camping, and cycling events for groups of 2-25 people
+
+Education
+Master of Science, Robotics September 2021- December 2023, Northeastern University, Boston, MA
+
+Bachelor of Technology, Mechatronics June 2014 - June 2018 from Narsee Monjee Institute of Management Studies, Mumbai, India
+
+Key Facts:
+- Worked at Vertex Pharmaceuticals for 3 years (July 2022 – August 2025) 
+- Ran a startup for 5+ years before that in India called as Hycrux Education
+- Total 8+ years experience across robotics, vision, automation, and product development
+- Studied at Northeastern University, Masters in Robotics from September 2021 to December 2023
+- I got married to Rashida Rangwala on August 3, 2025. I had met her in Boston in 2023 and started dating early 2024
+- 

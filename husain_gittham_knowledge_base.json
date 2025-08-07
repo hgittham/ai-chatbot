@@ -1,0 +1,132 @@
+{
+    "name": "Husain Gittham",
+    "location": "Boston, MA",
+    "Date of birth": "January 21, 1996",
+    "contact": {
+        "phone": "(781) 267-3194",
+        "email": "gitthamhusain@outlook.com"
+    },
+    "professional_summary": "AI-focused Data and Automation Engineer with cross-functional experience delivering machine vision, lab informatics, and data pipeline solutions in GxP pharmaceutical environments. Proven record of reducing manual workloads, driving operational efficiency, and enabling data-driven decision making through end-to-end deployment of AI/ML-powered systems.",
+    "skills": {
+        "AI/ML Frameworks": [
+            "scikit-learn",
+            "TensorFlow",
+            "PyTorch",
+            "OpenCV",
+            "Spectral Python",
+            "NLP/OCR libraries"
+        ],
+        "Programming": [
+            "C++",
+            "Python",
+            "HTML",
+            "JavaScript",
+            "SQL",
+            "AWS",
+            "REST APIs"
+        ],
+        "Lab/Digital Tools": [
+            "SolidWorks",
+            "Fusion360",
+            "AutoCAD",
+            "Matlab",
+            "Git",
+            "ROS",
+            "ERP",
+            "MES",
+            "ELN",
+            "LIMS",
+            "Power BI",
+            "Plotly"
+        ]
+    },
+    "work_experience": [
+        {
+            "company": "Vertex Pharmaceuticals",
+            "title": "Process Dev. Engineering Principal Scientific Associate",
+            "dates": "July 2022 - August 2025",
+            "roles": [
+                "Developed AI-powered defect classification models using PyTorch and TensorFlow, improving defect detection by 60% in GMP cleanrooms.",
+                "Designed camera workflows improving image quality by 40% and reducing product rejection by 75%.",
+                "Led implementation of vision systems for ISO Class 5,6,7 environments using TensorFlow/Keras.",
+                "Built data pipelines with OpenCV, PyTorch, and Spectral Python for hyperspectral analysis, saving $1M annually.",
+                "Developed full-stack MES/ERP software for 200+ users using Node.js, WebSocket, and SQL.",
+                "Built real-time RESTful services for traceability, genealogy, and compliance reporting.",
+                "Maintained and revised 20+ SOPs and WIs, and managed SharePoint pages for team collaboration."
+            ]
+        },
+        {
+            "company": "Hycrux",
+            "title": "Founder",
+            "dates": "January 2016 - September 2021",
+            "roles": [
+                "Bootstrapped and managed a 3D printing and design thinking startup, reaching break-even in 1 year.",
+                "Developed middle school curriculum taught at 3 IB schools, impacting 1000+ students.",
+                "Conducted 50+ hands-on 3D printer assembly workshops and produced printers at 20% lower cost.",
+                "Delivered 3D printing services to Mumbai's film industry."
+            ]
+        },
+        {
+            "company": "Northeastern University",
+            "title": "Graduate Student Supervisor, First Year Engineering Lab",
+            "dates": "September 2021 \u2013 September 2022",
+            "roles": [
+                "Supervised and guided 100+ capstone projects using lab machinery like CNC, 3D printers, and laser cutters."
+            ]
+        },
+        {
+            "company": "Mahindra and Mahindra",
+            "title": "Mechatronics Intern",
+            "dates": "June 2017 - July 2017",
+            "roles": [
+                "Developed auto program selector for welding guns, reducing human error by 1.76% in the process."
+            ]
+        }
+    ],
+    "education": [
+        {
+            "degree": "Master of Science, Robotics",
+            "institution": "Northeastern University",
+            "dates": "September 2021 \u2013 December 2023"
+        },
+        {
+            "degree": "Fellowship, Gordon Institute of Engineering Leadership",
+            "institution": "Northeastern University",
+            "dates": "September 2022 \u2013 July 2023"
+        },
+        {
+            "degree": "Bachelor of Technology, Mechatronics",
+            "institution": "NMIMS, Mumbai",
+            "dates": "June 2014 - June 2018"
+        }
+    ],
+    "projects_and_interests": [
+        "Built LLM-based NLP tool to extract structured data from scientific documents with visual validation.",
+        "Trained a Connect 4 reinforcement learning agent with DQL and MCTS.",
+        "Developed ROS-integrated SLAM with GPS, IMU, and stereo vision.",
+        "Built Arduino-based home automation for 7 clients.",
+        "Designed and sold 25 custom unicycles.",
+        "Led outdoor trekking, camping, and biking events for Jack and Hill Adventures in Mumbai."
+    ],
+    "personal": {
+        "outdoor_passions": [
+            "hiking",
+            "table tennis",
+            "football",
+            "slacklining",
+            "biking",
+            "mountain biking"
+        ],
+        "adventures": [
+            "Completed solo bikepacking trip from Toronto to Boston (700+ miles in 9 days).",
+            "Completed solo 7-day hike from Banff National Park to Lake Louise (70 miles)."
+        ],
+        "traits": [
+            "entrepreneurial mindset",
+            "strong ability to get things done"
+        ],
+        "concerns": [
+            "concerned about the capabilities of AI and uncertain times"
+        ]
+    }
+}
