@@ -6,7 +6,6 @@ import { useState, useRef, useEffect } from "react";
 
 export default function ChatbotPage() {
   // ---- Voice (Indian-accent English preference) ----
-  const [voices, setVoices] = useState([]);
   const [preferredVoice, setPreferredVoice] = useState(null);
 
   // ---- Chat state ----
@@ -20,23 +19,20 @@ export default function ChatbotPage() {
   const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
   const API_BASE = API_URL.replace(/\/chat$/, ""); // e.g. https://api.maixed.com
 
-  // Load voices and pick Indian English if available
+  // Load voices and auto-pick Indian English if available
   useEffect(() => {
-    const loadVoices = () => {
+    const pickVoice = () => {
       const v = window.speechSynthesis?.getVoices?.() || [];
-      setVoices(v);
-
-      // try locale first, then common Indian voice names, then default
       const byLocale = v.find(voice => /en[-_]IN/i.test(voice.lang));
       const byName = v.find(voice =>
         /India|Aditi|Raveena|Priya|Heera|Neerja|Prabhat|en-IN/i.test(voice.name)
       );
       setPreferredVoice(byLocale || byName || v.find(x => x.default) || v[0] || null);
     };
-
-    loadVoices();
+    // initial & whenever voices load asynchronously
+    pickVoice();
     if (window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
+      window.speechSynthesis.onvoiceschanged = pickVoice;
     }
   }, []);
 
@@ -125,7 +121,6 @@ export default function ChatbotPage() {
 
       {/* Links */}
       <div className="flex flex-wrap gap-4 justify-center">
-        {/* Use download attribute to force save */}
         <a
           href="/Resume_Husain_Gittham.pdf"
           download="Husain_Gittham_Resume.pdf"
@@ -149,24 +144,6 @@ export default function ChatbotPage() {
         >
           🌟 View my Recommendations
         </a>
-      </div>
-
-      {/* Optional: voice picker */}
-      <div className="text-sm text-gray-300">
-        <label className="mr-2">Voice:</label>
-        <select
-          className="bg-gray-800 border border-gray-700 rounded p-1"
-          value={preferredVoice?.name || ""}
-          onChange={(e) =>
-            setPreferredVoice(voices.find((v) => v.name === e.target.value) || null)
-          }
-        >
-          {voices.map((v) => (
-            <option key={v.name} value={v.name}>
-              {v.name} ({v.lang})
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Chat */}
