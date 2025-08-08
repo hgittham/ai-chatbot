@@ -120,18 +120,18 @@ export default function ChatbotPage() {
   }, []); // run once
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-6 space-y-4">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center p-6 space-y-6">
       <h1 className="text-3xl font-bold">🤖 Talk to Husain's AI Clone</h1>
 
       {/* Links */}
-      <div className="flex flex-wrap gap-4 justify-center mt-4">
+      <div className="flex flex-wrap gap-4 justify-center">
         {/* Use download attribute to force save */}
         <a
           href="/Resume_Husain_Gittham.pdf"
           download="Husain_Gittham_Resume.pdf"
           className="text-blue-400 underline"
         >
-          📄View my Resume
+          📄 View my Resume
         </a>
         <a
           href="https://www.linkedin.com/in/husain-gittham-428b51169/"
@@ -151,8 +151,8 @@ export default function ChatbotPage() {
         </a>
       </div>
 
-      {/* Optional: voice picker for you to fine‑tune */}
-      <div className="text-sm text-gray-300 mt-2">
+      {/* Optional: voice picker */}
+      <div className="text-sm text-gray-300">
         <label className="mr-2">Voice:</label>
         <select
           className="bg-gray-800 border border-gray-700 rounded p-1"
@@ -167,13 +167,6 @@ export default function ChatbotPage() {
             </option>
           ))}
         </select>
-      </div>
-
-      {/* Feedback section */}
-      <div className="w-full max-w-xl space-y-3 bg-gray-950/60 p-4 rounded-lg border border-gray-800 mt-4">
-        <h2 className="text-xl font-semibold">💬 Public feedback</h2>
-        <FeedbackForm apiBase={API_BASE} />
-        <FeedbackFeed apiBase={API_BASE} />
       </div>
 
       {/* Chat */}
@@ -204,6 +197,19 @@ export default function ChatbotPage() {
           <button onClick={handleMic} className="bg-blue-500 px-4 py-2 rounded">
             🎤 {listening ? "Stop" : "Talk"}
           </button>
+        </div>
+      </div>
+
+      {/* Divider & Feedback BELOW chat */}
+      <div className="w-full max-w-xl mt-10 border-t border-gray-800 pt-6">
+        <h2 className="text-2xl font-semibold mb-1">💬 Feedback & Suggestions</h2>
+        <p className="text-sm text-gray-400 mb-4">
+          Share public feedback about the site. Ideas, bugs, and critique are welcome — everyone can see it.
+        </p>
+
+        <div className="space-y-3 bg-gray-950/60 p-4 rounded-lg border border-gray-800">
+          <FeedbackForm apiBase={API_BASE} />
+          <FeedbackFeed apiBase={API_BASE} />
         </div>
       </div>
     </div>
