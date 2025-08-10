@@ -95,8 +95,8 @@ export default function ChatbotPage() {
     try {
       await avatarRef.current?.speakAzure(text, getAzureToken, {
         muted,
-        voice: "en-IN-PrabhatNeural", // try en-IN-NeerjaNeural for a female voice
-        rate: "-5%",                  // slow a bit so lips don’t finish early
+        voice: "en-IN-PrabhatNeural",
+        rate: "-5%",
       });
     } catch (e) {
       console.warn("Azure speech failed, falling back to browser TTS:", e);
@@ -163,10 +163,10 @@ export default function ChatbotPage() {
     const initial =
       "Hi there! I’m Husain’s AI clone — think of me as his digital twin, but with faster responses and zero need for sleep. I’m glad you’re here. How are you doing today?";
     setMessages([{ role: "bot", content: initial }]);
+    // Don't play audio yet (many browsers require a user gesture first).
+    // The first Send/Talk click will speak using say(initial/response).
+    setCaptions(initial);
     avatarRef.current?.setExpression("neutral");
-    (async () => {
-      await say(initial);
-    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
