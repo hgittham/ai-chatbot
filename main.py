@@ -7,6 +7,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
 import os, json, requests, uuid, datetime, sqlite3, pathlib
+from fastapi import HTTPException
 
 # ---------- Config ----------
 load_dotenv()
@@ -42,6 +43,22 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ---------- FastAPI ----------
 app = FastAPI(title="Husain AI Backend", version="1.0.0")
+@app.get("/azure/token")
+def azure_token():
+    key = os.getenv("AZURE_SPEECH_KEY")
+    region = os.getenv("AZURE_SPEECH_REGION")
+    if not key or not region:
+        raise HTTPException(status_code=500, detail="Azure speech key/region not configured")
+    try:
+        r = requests.post(
+            f"https://{region}.api.cognitive.microsoft.com/sts/v1.0/issueToken",
+            headers={"Ocp-Apim-Subscription-Key": key},
+            timeout=10,
+        )
+        r.raise_for_status()
+        return {"token": r.text, "region": region}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"IssueToken failed: {e}")
 
 app.add_middleware(
     CORSMiddleware,

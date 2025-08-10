@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import TalkingAvatar from "./components/TalkingAvatar";
 
 export default function ChatbotPage() {
-  const [preferredVoice, setPreferredVoice] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
@@ -18,25 +17,10 @@ export default function ChatbotPage() {
   const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
   const API_BASE = API_URL.replace(/\/chat$/, "");
 
-  // ---------- Voice selection (prefer Indian English) ----------
-  useEffect(() => {
-    const pickVoice = () => {
-      const v = window.speechSynthesis?.getVoices?.() || [];
-      const byLocale = v.find((voice) => /en[-_]IN/i.test(voice.lang));
-      const byName = v.find((voice) =>
-        /India|Aditi|Raveena|Priya|Heera|Neerja|Prabhat|en-IN/i.test(voice.name)
-      );
-      setPreferredVoice(byLocale || byName || v.find((x) => x.default) || v[0] || null);
-    };
-    pickVoice();
-    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = pickVoice;
-  }, []);
-
   // ---------- iOS/Safari audio unlock ----------
   const unlockAudioForiOS = () => {
     if (audioUnlockedRef.current) return;
     try {
-      // 1) Kick a silent AudioContext to route to speaker
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
         const ctx = new AudioCtx();
@@ -47,17 +31,13 @@ export default function ChatbotPage() {
         if (ctx.state === "suspended") ctx.resume();
         source.start(0);
       }
-      // 2) Nudge TTS engine
-      if (window.speechSynthesis?.resume) {
-        window.speechSynthesis.resume();
-      }
+      if (window.speechSynthesis?.resume) window.speechSynthesis.resume();
       audioUnlockedRef.current = true;
     } catch {
       // ignore
     }
   };
 
-  // one-time global unlock on first user gesture
   useEffect(() => {
     const onFirstInteract = () => {
       unlockAudioForiOS();
@@ -72,42 +52,54 @@ export default function ChatbotPage() {
     };
   }, []);
 
-  // ---------- TTS with captions ----------
-  const speak = (text) => {
-    setCaptions(text); // show full captions (no scroll)
+  // ---------- Azure token fetcher ----------
+  const getAzureToken = async () => {
+    const res = await fetch(`${API_BASE}/azure/token`);
+    if (!res.ok) throw new Error("Azure token failed");
+    return res.json(); // { token, region }
+  };
+
+  // ---------- Fallback browser TTS (if Azure fails) ----------
+  const speakFallback = (text) => {
+    setCaptions(text);
     if (muted || !window.speechSynthesis) return;
     unlockAudioForiOS();
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    if (preferredVoice) u.voice = preferredVoice;
     u.rate = 0.95;
     u.pitch = 1.0;
 
-     // --- NEW: precompute a conservative fallback duration (slower) ---
-  const words = (text || "").trim().split(/\s+/).filter(Boolean).length || 1;
-  const estMs = Math.max(1500, Math.min(20000, words * 320 * (1.0 / u.rate)));
-  avatarRef.current?.driveMouthStart(text, estMs);
+    // Drive slow, text-based lip sync while browser speaks
+    const words = (text || "").trim().split(/\s+/).filter(Boolean).length || 1;
+    const estMs = Math.max(1500, Math.min(20000, words * 320 * (1.0 / u.rate)));
+    avatarRef.current?.driveMouthStart(text, estMs);
 
-  // --- NEW: real-time visemes via boundary events ---
-  u.onboundary = (ev) => {
-    // Some browsers emit 'word' boundaries, others char boundaries.
-    // We’ll map the current character at charIndex.
-    try {
-      const idx = ev.charIndex ?? 0;
-      const ch = (text || "").charAt(idx) || " ";
-      avatarRef.current?.setMouthByChar(ch);
-    } catch {
-      /* ignore */
-    }
-  };
+    u.onboundary = (ev) => {
+      try {
+        const idx = ev.charIndex ?? 0;
+        const ch = (text || "").charAt(idx) || " ";
+        avatarRef.current?.setMouthByChar(ch);
+      } catch {}
+    };
+    u.onend = () => avatarRef.current?.stopMouth();
 
-  u.onend = () => {
-    avatarRef.current?.stopMouth();
-  };
-
-    // In case iOS paused engine:
     if (window.speechSynthesis?.paused) window.speechSynthesis.resume();
     window.speechSynthesis.speak(u);
+  };
+
+  // ---------- Say text via Azure (visemes + audio) with fallback ----------
+  const say = async (text) => {
+    setCaptions(text);
+    try {
+      await avatarRef.current?.speakAzure(text, getAzureToken, {
+        muted,
+        voice: "en-IN-PrabhatNeural", // try en-IN-NeerjaNeural for a female voice
+        rate: "-5%",                  // slow a bit so lips don’t finish early
+      });
+    } catch (e) {
+      console.warn("Azure speech failed, falling back to browser TTS:", e);
+      speakFallback(text);
+    }
   };
 
   // ---------- Chat send ----------
@@ -135,8 +127,7 @@ export default function ChatbotPage() {
 
     avatarRef.current?.setExpression("happy");
     avatarRef.current?.wave();
-    avatarRef.current?.driveMouthFromText(replyText);
-    speak(replyText);
+    await say(replyText);
   };
 
   // ---------- Mic ----------
@@ -145,7 +136,7 @@ export default function ChatbotPage() {
       alert("Your browser doesn't support voice recognition");
       return;
     }
-    unlockAudioForiOS(); // make sure audio path is unlocked when user taps Talk
+    unlockAudioForiOS();
     if (listening) {
       recognitionRef.current?.stop();
       setListening(false);
@@ -170,8 +161,10 @@ export default function ChatbotPage() {
     const initial =
       "Hi there! I’m Husain’s AI clone — think of me as his digital twin, but with faster responses and zero need for sleep. I’m glad you’re here. How are you doing today?";
     setMessages([{ role: "bot", content: initial }]);
-    avatarRef.current?.driveMouthFromText(initial);
-    speak(initial);
+    avatarRef.current?.setExpression("neutral");
+    (async () => {
+      await say(initial);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -236,7 +229,7 @@ export default function ChatbotPage() {
             cameraZ={1.85}
             modelScale={1.14}
             modelY={-0.44}
-            modelRotationY={0} 
+            modelRotationY={0}
             listeningGlow={listening}
             initialExpression="neutral"
             showFloor={false}
@@ -264,8 +257,11 @@ export default function ChatbotPage() {
               onClick={() => {
                 setMuted((m) => {
                   const next = !m;
-                  if (next && window.speechSynthesis) window.speechSynthesis.cancel();
-                  if (next) avatarRef.current?.stopMouth();
+                  if (next) {
+                    // turning mute ON: stop current audio & mouth
+                    if (window.speechSynthesis) window.speechSynthesis.cancel();
+                    avatarRef.current?.stopMouth();
+                  }
                   return next;
                 });
               }}
@@ -329,10 +325,12 @@ export default function ChatbotPage() {
 
 /* ----------------- Feedback Components ----------------- */
 
+import { useState as useState2, useEffect as useEffect2 } from "react";
+
 function FeedbackForm({ apiBase }) {
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [name, setName] = useState2("");
+  const [message, setMessage] = useState2("");
+  const [submitting, setSubmitting] = useState2(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -381,7 +379,7 @@ function FeedbackForm({ apiBase }) {
 }
 
 function FeedbackFeed({ apiBase }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState2([]);
 
   const load = async () => {
     try {
@@ -393,7 +391,7 @@ function FeedbackFeed({ apiBase }) {
     }
   };
 
-  useEffect(() => {
+  useEffect2(() => {
     load();
     const id = setInterval(load, 10000);
     return () => clearInterval(id);
