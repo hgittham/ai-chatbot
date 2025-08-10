@@ -4,10 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import TalkingAvatar from "./components/TalkingAvatar";
 
 export default function ChatbotPage() {
-  // Voice (Indian English)
   const [preferredVoice, setPreferredVoice] = useState(null);
-
-  // Chat state
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
@@ -17,26 +14,24 @@ export default function ChatbotPage() {
   const sessionIdRef = useRef(crypto.randomUUID());
   const avatarRef = useRef(null);
 
-  // API
   const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
   const API_BASE = API_URL.replace(/\/chat$/, "");
 
-  // Load voices & pick Indian English
   useEffect(() => {
     const pickVoice = () => {
       const v = window.speechSynthesis?.getVoices?.() || [];
-      const byLocale = v.find(voice => /en[-_]IN/i.test(voice.lang));
-      const byName = v.find(voice =>
+      const byLocale = v.find((voice) => /en[-_]IN/i.test(voice.lang));
+      const byName = v.find((voice) =>
         /India|Aditi|Raveena|Priya|Heera|Neerja|Prabhat|en-IN/i.test(voice.name)
       );
-      setPreferredVoice(byLocale || byName || v.find(x => x.default) || v[0] || null);
+      setPreferredVoice(byLocale || byName || v.find((x) => x.default) || v[0] || null);
     };
     pickVoice();
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = pickVoice;
   }, []);
 
   const speak = (text) => {
-    setCaptions(text);
+    setCaptions(text); // show full text; no scroll box
     if (muted || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -46,7 +41,6 @@ export default function ChatbotPage() {
     window.speechSynthesis.speak(u);
   };
 
-  // Send a message
   const sendMessage = async (text) => {
     if (!text?.trim()) return;
     const newMsg = { role: "user", content: text.trim() };
@@ -56,27 +50,25 @@ export default function ChatbotPage() {
 
     const historyToSend = updated.slice(-6).map((m) => ({
       role: m.role === "bot" ? "assistant" : m.role,
-      content: m.content
+      content: m.content,
     }));
 
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Session-ID": sessionIdRef.current },
-      body: JSON.stringify({ message: text, history: historyToSend })
+      body: JSON.stringify({ message: text, history: historyToSend }),
     });
     const data = await res.json();
     const replyText = data?.response || "Sorry, I didn't catch that.";
     const reply = { role: "bot", content: replyText };
     setMessages([...updated, reply]);
 
-    // Avatar + audio
     avatarRef.current?.setExpression("happy");
     avatarRef.current?.wave();
     avatarRef.current?.driveMouthFromText(replyText);
     speak(replyText);
   };
 
-  // Mic controls
   const toggleMic = () => {
     if (!("webkitSpeechRecognition" in window)) {
       alert("Your browser doesn't support voice recognition");
@@ -101,7 +93,6 @@ export default function ChatbotPage() {
     setListening(true);
   };
 
-  // Initial greeting
   useEffect(() => {
     const initial =
       "Hi there! I’m Husain’s AI clone — think of me as his digital twin, but with faster responses and zero need for sleep. I’m glad you’re here. How are you doing today?";
@@ -111,7 +102,6 @@ export default function ChatbotPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reusable Links block
   const Links = ({ className = "" }) => (
     <div className={`flex flex-wrap gap-3 ${className}`}>
       <a
@@ -142,44 +132,40 @@ export default function ChatbotPage() {
 
   return (
     <div className="min-h-screen bg-black text-white px-4 md:px-6 lg:px-8 py-3">
-      {/* tighter header */}
-      <h1 className="text-3xl font-extrabold text-center mb-3">
-        🤖 Talk to Husain's AI Clone
-      </h1>
+      <h1 className="text-3xl font-extrabold text-center mb-3">🤖 Talk to Husain's AI Clone</h1>
 
-      {/* Desktop-only LINKS ABOVE CHAT (center column) */}
+      {/* Desktop-only: links above chat, centered */}
       <div className="hidden md:flex justify-center mb-3">
         <Links />
       </div>
 
       {/* 3 columns on desktop; stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto items-start">
-        {/* LEFT — Avatar panel (pulled to top with self-start) */}
-        <div className="flex flex-col items-center gap-3 self-start">
-          {/* Mobile-only LINKS ABOVE AVATAR */}
-          <div className="md:hidden w-full flex justify-center mb-2">
+        {/* LEFT — Avatar panel (nudged up with negative margin) */}
+        <div className="flex flex-col items-center gap-3 self-start -mt-4">
+          {/* Mobile-only: center links above avatar */}
+          <div className="md:hidden w-full flex flex-col items-center text-center mb-2">
             <Links />
           </div>
 
           <TalkingAvatar
             ref={avatarRef}
             avatarUrl="/avatars/husain.glb"
-            width={360}
-            height={520}
-            cameraZ={2.0}     // a bit closer
-            modelScale={1.07}
-            modelY={-0.38}
+            /* Shorter canvas + closer framing */
+            width={320}
+            height={440}
+            cameraZ={1.85}
+            modelScale={1.14}
+            modelY={-0.44}
             listeningGlow={listening}
             initialExpression="neutral"
             showFloor={false}
           />
 
-          {/* Captions (shorter, scrollable) */}
+          {/* Captions: no scrollbar; expand to content */}
           <div className="w-full max-w-xs text-center text-gray-200 bg-gray-900/70 border border-gray-700 rounded p-2">
-            <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">
-              Captions
-            </div>
-            <div className="text-sm max-h-20 overflow-y-auto">{captions || "…"}</div>
+            <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">Captions</div>
+            <div className="text-sm whitespace-pre-wrap">{captions || "…"}</div>
           </div>
 
           {/* Mic + Mute */}
@@ -215,7 +201,7 @@ export default function ChatbotPage() {
           </div>
         </div>
 
-        {/* MIDDLE — Chat box */}
+        {/* MIDDLE — Chat */}
         <div className="flex flex-col gap-3">
           <div className="bg-gray-900 p-4 rounded-lg h-[30rem] overflow-y-auto space-y-2">
             {messages.map((m, i) => (
@@ -250,7 +236,6 @@ export default function ChatbotPage() {
             <p className="text-sm text-gray-400 mb-4">
               Share ideas, bugs, or critique. This wall is public.
             </p>
-
             <div className="space-y-3">
               <FeedbackForm apiBase={API_BASE} />
               <FeedbackFeed apiBase={API_BASE} />
@@ -277,7 +262,7 @@ function FeedbackForm({ apiBase }) {
       await fetch(`${apiBase}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, message })
+        body: JSON.stringify({ name, message }),
       });
       setMessage("");
     } catch {
@@ -324,7 +309,7 @@ function FeedbackFeed({ apiBase }) {
       const data = await res.json();
       setItems(data);
     } catch {
-      // ignore errors
+      // ignore
     }
   };
 
@@ -367,4 +352,3 @@ function FeedbackFeed({ apiBase }) {
     </div>
   );
 }
-
