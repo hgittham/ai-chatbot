@@ -82,6 +82,29 @@ export default function ChatbotPage() {
     if (preferredVoice) u.voice = preferredVoice;
     u.rate = 0.95;
     u.pitch = 1.0;
+
+     // --- NEW: precompute a conservative fallback duration (slower) ---
+  const words = (text || "").trim().split(/\s+/).filter(Boolean).length || 1;
+  const estMs = Math.max(1500, Math.min(20000, words * 320 * (1.0 / u.rate)));
+  avatarRef.current?.driveMouthStart(text, estMs);
+
+  // --- NEW: real-time visemes via boundary events ---
+  u.onboundary = (ev) => {
+    // Some browsers emit 'word' boundaries, others char boundaries.
+    // We’ll map the current character at charIndex.
+    try {
+      const idx = ev.charIndex ?? 0;
+      const ch = (text || "").charAt(idx) || " ";
+      avatarRef.current?.setMouthByChar(ch);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  u.onend = () => {
+    avatarRef.current?.stopMouth();
+  };
+
     // In case iOS paused engine:
     if (window.speechSynthesis?.paused) window.speechSynthesis.resume();
     window.speechSynthesis.speak(u);

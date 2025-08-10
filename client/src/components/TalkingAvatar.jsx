@@ -1,15 +1,22 @@
 // client/src/components/TalkingAvatar.jsx
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-/** Build a simple viseme timeline from text (free mode) */
+/** Build a conservative (slower) viseme timeline as fallback (when TTS boundaries aren’t available) */
 function buildVisemeTimelineFromText(text, totalMs = null) {
   const clean = (text || "").replace(/\s+/g, " ").trim();
   if (!clean) return [];
 
+  // Slower pacing to match human TTS more closely
+  // ~220 wpm => ~272ms/word, padded 1.35x
   const words = clean.split(" ").length;
-  const estTotal = totalMs ?? Math.max(1200, Math.min(12000, words * 333));
+  const est = totalMs ?? Math.max(1400, Math.min(18000, words * 272 * 1.35));
 
   const mapChar = (ch) => {
     ch = ch.toLowerCase();
@@ -18,17 +25,17 @@ function buildVisemeTimelineFromText(text, totalMs = null) {
     if ("i".includes(ch)) return "I";
     if ("o".includes(ch)) return "O";
     if ("u".includes(ch)) return "U";
-    return Math.random() < 0.5 ? "I" : "U";
+    return Math.random() < 0.5 ? "I" : "U"; // small fallback
   };
 
   const chars = clean.replace(/[^a-z]/gi, "") || "aaa";
-  const step = estTotal / chars.length;
+  const step = est / chars.length;
 
   return chars.split("").map((c, idx) => ({
     time: idx * step,
     shape: mapChar(c),
-    value: 1.0,
-    dur: step * 0.8
+    value: 0.95,
+    dur: step * 0.88,
   }));
 }
 
@@ -36,15 +43,18 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
   {
     avatarUrl = "/avatars/husain.glb",
     width = 320,
-    height = 440,
-    initialExpression = "neutral",
+    height = 420,
+    /** Camera & model placement */
     cameraZ = 1.85,
     modelScale = 1.14,
     modelY = -0.44,
-    modelRotationY = 0,
+    modelRotationY = 0, // If you see the back of the head, try Math.PI
+    /** Visuals */
     showFloor = false,
     envIntensity = 1.0,
-    listeningGlow = false // when true, subtle scale pulse
+    listeningGlow = false, // subtle breathing/pulse while mic is listening
+    /** Expressions (simple) */
+    initialExpression = "neutral",
   },
   ref
 ) {
@@ -53,58 +63,59 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
   const clockRef = useRef(new THREE.Clock());
-  const avatarRef = useRef(null);
+  const avatarRootRef = useRef(null);
 
-  // all skinned/meshes to manipulate morph targets
+  // Meshes with morph targets
   const morphMeshesRef = useRef([]);
-  // indices for various mouth shapes across meshes
+  // Cached morph target indices across meshes
   const morphIndexRef = useRef({
-    A: [], E: [], I: [], O: [], U: [], mouthOpen: []
+    A: [],
+    E: [],
+    I: [],
+    O: [],
+    U: [],
+    mouthOpen: [],
   });
 
-  // text-based viseme state
+  // Text-timeline fallback state
   const visemesRef = useRef({ timeline: [], startedAt: 0, active: false });
+
+  // Anim helpers
   const rafRef = useRef(0);
   const tRef = useRef(0);
   const glowTRef = useRef(0);
 
-  /** Helpers to discover morph target indices on a mesh */
-  const getIndex = (dict, name) => {
+  /** Morph discovery helpers */
+  const findIndex = (dict, name) => {
     if (!dict) return -1;
-    const keys = Object.keys(dict);
-    // exact
     if (dict[name] !== undefined) return dict[name];
-    // case-insensitive
-    const k = keys.find((k) => k.toLowerCase() === name.toLowerCase());
-    if (k) return dict[k];
-    // contains
+    const keys = Object.keys(dict);
+    const exact = keys.find((k) => k.toLowerCase() === name.toLowerCase());
+    if (exact) return dict[exact];
     const contains = keys.find((k) => k.toLowerCase().includes(name.toLowerCase()));
     if (contains) return dict[contains];
     return -1;
   };
 
-  const discoverMorphTargets = (mesh) => {
+  const registerMorphTargets = (mesh) => {
     if (!mesh.morphTargetDictionary) return;
     const d = mesh.morphTargetDictionary;
 
-    const tryNames = (candidates) => {
-      for (const nm of candidates) {
-        const idx = getIndex(d, nm);
+    const tryOne = (...names) => {
+      for (const nm of names) {
+        const idx = findIndex(d, nm);
         if (idx >= 0) return idx;
       }
       return -1;
     };
 
-    // Try common sets
-    // visemes
-    const A = tryNames(["viseme_aa", "A"]);
-    const E = tryNames(["viseme_e", "E"]);
-    const I = tryNames(["viseme_ih", "I"]);
-    const O = tryNames(["viseme_oh", "O"]);
-    const U = tryNames(["viseme_uh", "U"]);
-    const mouthOpen = tryNames(["mouthOpen", "MouthOpen", "mouth_open"]);
+    const A = tryOne("viseme_aa", "A");
+    const E = tryOne("viseme_e", "E");
+    const I = tryOne("viseme_ih", "I");
+    const O = tryOne("viseme_oh", "O");
+    const U = tryOne("viseme_uh", "U");
+    const mouthOpen = tryOne("mouthOpen", "MouthOpen", "mouth_open");
 
-    // Store any found
     if (A >= 0) morphIndexRef.current.A.push({ mesh, idx: A });
     if (E >= 0) morphIndexRef.current.E.push({ mesh, idx: E });
     if (I >= 0) morphIndexRef.current.I.push({ mesh, idx: I });
@@ -115,28 +126,25 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
 
   const clearAllMouth = () => {
     const sets = Object.values(morphIndexRef.current);
-    sets.forEach((arr) => {
+    sets.forEach((arr) =>
       arr.forEach(({ mesh, idx }) => {
-        if (!mesh.morphTargetInfluences) return;
-        mesh.morphTargetInfluences[idx] = 0;
-      });
-    });
+        if (mesh.morphTargetInfluences) mesh.morphTargetInfluences[idx] = 0;
+      })
+    );
   };
 
   const setMouthShape = (shape, value = 1.0) => {
-    const names = ["A", "E", "I", "O", "U"];
-    // if we have explicit shape
+    const vowelNames = ["A", "E", "I", "O", "U"];
     if (morphIndexRef.current[shape]?.length) {
-      names.forEach((nm) => {
-        const arr = morphIndexRef.current[nm];
-        arr.forEach(({ mesh, idx }) => {
+      vowelNames.forEach((nm) => {
+        morphIndexRef.current[nm].forEach(({ mesh, idx }) => {
           if (!mesh.morphTargetInfluences) return;
           mesh.morphTargetInfluences[idx] = nm === shape ? value : 0;
         });
       });
       return;
     }
-    // fallback to mouthOpen if no vowels
+    // fallback: mouthOpen
     const arr = morphIndexRef.current.mouthOpen;
     if (arr.length) {
       arr.forEach(({ mesh, idx }) => {
@@ -145,42 +153,63 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     }
   };
 
+  /** Simple expression (for plain GLBs we keep it subtle) */
   const setExpression = (mode = "neutral") => {
-    // For plain GLB, we don’t have named emotions.
-    // We can emulate with eyebrows/eyes if present; most RPM GLBs don’t expose those.
-    // Keep it simple: neutral clears mouth; the “expression” is subtle head nod/wave.
+    // No dedicated emotion morphs on most RPM GLBs; keep to mouth only
     clearAllMouth();
+    // You could add small head tilts here per mode if you want later.
   };
 
+  /** Cute gestures (very subtle) */
   const wave = () => {
-    tRef.current = 0; // reused for a simple wave anim
+    // We’ll reuse tRef for a tiny shoulder wiggle effect in the loop
+    tRef.current = 0;
   };
 
   const nod = () => {
-    tRef.current = 0; // reused for a nod anim
+    tRef.current = 0;
   };
 
-  // Public API
+  // Real-time char → viseme mapper
+  const charToShape = (ch) => {
+    const c = (ch || "").toLowerCase();
+    if ("a".includes(c)) return "A";
+    if ("e".includes(c)) return "E";
+    if ("i".includes(c)) return "I";
+    if ("o".includes(c)) return "O";
+    if ("u".includes(c)) return "U";
+    return "I";
+  };
+
+  /** Expose control API to parent (App.js) */
   useImperativeHandle(ref, () => ({
     setExpression,
     wave,
     nod,
-    driveMouthFromText: (text) => {
-      const tl = buildVisemeTimelineFromText(text);
+    /** Start slow fallback timeline */
+    driveMouthStart: (text, totalMsFallback) => {
+      const tl = buildVisemeTimelineFromText(text, totalMsFallback);
       visemesRef.current.timeline = tl;
       visemesRef.current.startedAt = performance.now();
       visemesRef.current.active = true;
     },
+    /** Real-time mouth from TTS boundaries */
+    setMouthByChar: (ch) => {
+      const shape = charToShape(ch);
+      setMouthShape(shape, 1.0);
+      // Optional: auto-clear after ~90ms to avoid sticking if boundary gaps are large
+      // setTimeout(() => clearAllMouth(), 90);
+    },
     stopMouth: () => {
       visemesRef.current.active = false;
       clearAllMouth();
-    }
+    },
   }));
 
   useEffect(() => {
     const canvas = canvasRef.current;
 
-    // Renderer/Scene/Camera
+    // Renderer / Scene / Camera
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
@@ -203,8 +232,10 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     fill.position.set(-0.5, 0.8, -0.6);
     scene.add(fill);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6 * envIntensity));
+    const amb = new THREE.AmbientLight(0xffffff, 0.6 * envIntensity);
+    scene.add(amb);
 
+    // Optional floor
     if (showFloor) {
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
@@ -222,27 +253,25 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
       avatarUrl,
       (gltf) => {
         const root = gltf.scene;
-        // make sure nothing gets frustum-culled
         root.traverse((o) => (o.frustumCulled = false));
 
-        // Face camera (some RPM models import backwards)
+        // Face the camera; try 0 or Math.PI if you see the back of the head
         root.rotation.y = modelRotationY;
-
         root.scale.setScalar(modelScale);
         root.position.y = modelY;
 
-        // collect meshes with morph targets
+        // Collect meshes with morph targets
         const morphMeshes = [];
         root.traverse((obj) => {
           if (obj.isMesh || obj.isSkinnedMesh) {
             morphMeshes.push(obj);
-            discoverMorphTargets(obj);
+            registerMorphTargets(obj);
           }
         });
         morphMeshesRef.current = morphMeshes;
 
         scene.add(root);
-        avatarRef.current = root;
+        avatarRootRef.current = root;
 
         setExpression(initialExpression);
       },
@@ -256,24 +285,25 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
       tRef.current += dt;
       glowTRef.current += dt;
 
-      // listening glow = subtle breathing scale
-      if (avatarRef.current && listeningGlow) {
+      // Listening pulse
+      if (avatarRootRef.current && listeningGlow) {
         const s = 1 + Math.sin(glowTRef.current * 3.0) * 0.015;
-        avatarRef.current.scale.setScalar(modelScale * s);
-      } else if (avatarRef.current) {
-        avatarRef.current.scale.setScalar(modelScale);
+        avatarRootRef.current.scale.setScalar(modelScale * s);
+      } else if (avatarRootRef.current) {
+        avatarRootRef.current.scale.setScalar(modelScale);
       }
 
-      // very tiny idle motion
-      if (avatarRef.current) {
-        avatarRef.current.rotation.x = Math.sin(tRef.current * 0.6) * 0.02;
+      // Tiny idle sway
+      if (avatarRootRef.current) {
+        avatarRootRef.current.rotation.x = Math.sin(tRef.current * 0.6) * 0.02;
       }
 
-      // speech visemes
+      // Fallback timeline driver
       const v = visemesRef.current;
       if (v.active && v.timeline.length) {
         const elapsed = performance.now() - v.startedAt;
-        // find the latest key we passed
+
+        // get latest key <= elapsed
         let key = null;
         for (let i = v.timeline.length - 1; i >= 0; i--) {
           if (elapsed >= v.timeline[i].time) {
@@ -311,9 +341,28 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
         }
       });
     };
-  }, [avatarUrl, width, height, showFloor, envIntensity, initialExpression, cameraZ, modelScale, modelY, listeningGlow]);
+  }, [
+    avatarUrl,
+    width,
+    height,
+    showFloor,
+    envIntensity,
+    initialExpression,
+    cameraZ,
+    modelScale,
+    modelY,
+    modelRotationY,
+    listeningGlow,
+  ]);
 
-  return <canvas ref={canvasRef} width={width} height={height} style={{ width, height }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      style={{ width, height, display: "block" }}
+    />
+  );
 });
 
 export default TalkingAvatar;
