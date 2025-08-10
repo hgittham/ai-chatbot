@@ -213,6 +213,7 @@ export default function ChatbotPage() {
             cameraZ={1.85}
             modelScale={1.14}
             modelY={-0.44}
+            modelRotationY={0} 
             listeningGlow={listening}
             initialExpression="neutral"
             showFloor={false}

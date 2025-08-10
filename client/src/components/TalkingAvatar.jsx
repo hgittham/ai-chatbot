@@ -41,6 +41,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     cameraZ = 1.85,
     modelScale = 1.14,
     modelY = -0.44,
+    modelRotationY = 0,
     showFloor = false,
     envIntensity = 1.0,
     listeningGlow = false // when true, subtle scale pulse
@@ -225,7 +226,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
         root.traverse((o) => (o.frustumCulled = false));
 
         // Face camera (some RPM models import backwards)
-        root.rotation.y = Math.PI;
+        root.rotation.y = modelRotationY;
 
         root.scale.setScalar(modelScale);
         root.position.y = modelY;
