@@ -4,14 +4,14 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
-// ---- conservative text fallback (unchanged) ----
+// -------- fallback text → visemes (unchanged logic, slightly compact) -------
 function buildVisemeTimelineFromText(text, totalMs = null) {
   const clean = (text || "").replace(/\s+/g, " ").trim();
   if (!clean) return [];
   const words = clean.split(" ").length;
   const est = totalMs ?? Math.max(1400, Math.min(18000, words * 272 * 1.35));
-  const mapChar = (ch) => {
-    const c = ch.toLowerCase();
+  const map = (c) => {
+    c = c.toLowerCase();
     if ("a".includes(c)) return "A";
     if ("e".includes(c)) return "E";
     if ("i".includes(c)) return "I";
@@ -21,40 +21,34 @@ function buildVisemeTimelineFromText(text, totalMs = null) {
   };
   const chars = clean.replace(/[^a-z]/gi, "") || "aaa";
   const step = est / chars.length;
-  return chars.split("").map((c, i) => ({
-    time: i * step,
-    shape: mapChar(c),
-    value: 0.95,
-    dur: step * 0.88,
-  }));
+  return chars.split("").map((c, i) => ({ time: i * step, shape: map(c), value: 0.95, dur: step * 0.88 }));
 }
 
-// Rough mapping Azure visemeId -> vowel mouth shapes
-// (Azure viseme IDs are phoneme groups; this buckets common vowels)
+// Heuristic Azure viseme→vowel mapping
 function mapAzureVisemeToShape(id) {
-  // These buckets are heuristic and work well enough for RPM-style avatars
-  const A = new Set([2, 3, 13, 14]);          // aa, ah, aw, ay
-  const E = new Set([1, 5, 7]);               // ae, eh, ey
-  const I = new Set([8, 9]);                  // ih, iy
-  const O = new Set([4, 10, 15]);             // ao, ow, oy
-  const U = new Set([11, 12]);                // uh, uw
+  const A = new Set([2, 3, 13, 14]);
+  const E = new Set([1, 5, 7]);
+  const I = new Set([8, 9]);
+  const O = new Set([4, 10, 15]);
+  const U = new Set([11, 12]);
   if (A.has(id)) return "A";
   if (E.has(id)) return "E";
   if (I.has(id)) return "I";
   if (O.has(id)) return "O";
   if (U.has(id)) return "U";
-  return "I"; // consonants → small mouth
+  return "I";
 }
 
 const TalkingAvatar = forwardRef(function TalkingAvatar(
   {
     avatarUrl = "/avatars/husain.glb",
-    width = 320,
-    height = 420,
-    cameraZ = 1.85,
-    modelScale = 1.14,
-    modelY = -0.44,
-    modelRotationY = 0, // use Math.PI if you ever see the back of the head
+    width = 360,
+    height = 520,
+    // these are now *starting* camera/model hints; framing is automatic after load
+    cameraZ = 2.0,
+    modelScale = 1.0,
+    modelY = 0.0,
+    modelRotationY = 0,
     showFloor = false,
     envIntensity = 1.0,
     listeningGlow = false,
@@ -74,10 +68,9 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
   const rafRef = useRef(0);
   const tRef = useRef(0);
   const glowTRef = useRef(0);
-
-  // speech SDK synthesizer handle (so we can stop if needed)
   const synthRef = useRef(null);
 
+  // --- morph helpers
   const findIndex = (dict, name) => {
     if (!dict) return -1;
     if (dict[name] !== undefined) return dict[name];
@@ -85,8 +78,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     const exact = keys.find((k) => k.toLowerCase() === name.toLowerCase());
     if (exact) return dict[exact];
     const contains = keys.find((k) => k.toLowerCase().includes(name.toLowerCase()));
-    if (contains) return dict[contains];
-    return -1;
+    return contains ? dict[contains] : -1;
   };
 
   const registerMorphTargets = (mesh) => {
@@ -105,7 +97,6 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     const O = tryOne("viseme_oh", "O");
     const U = tryOne("viseme_uh", "U");
     const mouthOpen = tryOne("mouthOpen", "MouthOpen", "mouth_open");
-
     if (A >= 0) morphIndexRef.current.A.push({ mesh, idx: A });
     if (E >= 0) morphIndexRef.current.E.push({ mesh, idx: E });
     if (I >= 0) morphIndexRef.current.I.push({ mesh, idx: I });
@@ -123,33 +114,48 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
   };
 
   const setMouthShape = (shape, value = 1.0) => {
-    const vowelNames = ["A", "E", "I", "O", "U"];
+    const vowels = ["A", "E", "I", "O", "U"];
     if (morphIndexRef.current[shape]?.length) {
-      vowelNames.forEach((nm) =>
+      vowels.forEach((nm) =>
         morphIndexRef.current[nm].forEach(({ mesh, idx }) => {
           if (!mesh.morphTargetInfluences) return;
           mesh.morphTargetInfluences[idx] = nm === shape ? value : 0;
         })
       );
-      return;
+    } else {
+      morphIndexRef.current.mouthOpen.forEach(({ mesh, idx }) => {
+        if (mesh.morphTargetInfluences) mesh.morphTargetInfluences[idx] = value;
+      });
     }
-    // fallback
-    morphIndexRef.current.mouthOpen.forEach(({ mesh, idx }) => {
-      if (mesh.morphTargetInfluences) mesh.morphTargetInfluences[idx] = value;
-    });
   };
 
-  const setExpression = () => {
-    // keep simple for generic GLBs
-    clearAllMouth();
-  };
+  const setExpression = () => clearAllMouth();
+  const wave = () => (tRef.current = 0);
+  const nod = () => (tRef.current = 0);
 
-  const wave = () => {
-    tRef.current = 0;
-  };
-  const nod = () => {
-    tRef.current = 0;
-  };
+  // --- frame the model so the whole body fits and is centered
+  function frameModel(root, camera, padding = 1.15) {
+    const box = new THREE.Box3().setFromObject(root);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    // Move model so its center is at the origin
+    root.position.x += -center.x;
+    root.position.y += -center.y;
+    root.position.z += -center.z;
+
+    // Lift so feet touch y=0 (nicer for floor/no floor)
+    const feetY = box.min.y - center.y; // relative after recenter
+    root.position.y += -feetY;
+
+    // Fit camera distance based on height
+    const fov = THREE.MathUtils.degToRad(camera.fov);
+    const dist = (size.y * padding) / (2 * Math.tan(fov / 2));
+    camera.position.set(0, size.y * 0.5, dist);
+    camera.lookAt(new THREE.Vector3(0, size.y * 0.5, 0));
+  }
 
   useImperativeHandle(ref, () => ({
     setExpression,
@@ -160,7 +166,6 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
       visemesRef.current = { timeline: tl, startedAt: performance.now(), active: true };
     },
     setMouthByChar: (ch) => {
-      // not used when Azure is active; kept for fallback
       const c = (ch || "").toLowerCase();
       const shape = "aeiou".includes(c) ? c.toUpperCase() : "I";
       setMouthShape(shape, 1.0);
@@ -168,56 +173,49 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     stopMouth: () => {
       visemesRef.current.active = false;
       clearAllMouth();
+      try { synthRef.current?.close(); } catch {}
+      synthRef.current = null;
     },
 
-    // ---- NEW: Azure Speech with visemes ----
-    async speakAzure(text, getToken, { muted = false, voice = "en-IN-PrabhatNeural", rate = "+0%" } = {}) {
+    // ---- Azure Speech + visemes ----
+    async speakAzure(text, getToken, { muted = false, voice = "en-IN-PrabhatNeural", rate = "-5%" } = {}) {
       try {
-        // stop any previous run
-        synthRef.current?.close();
+        // kill previous
+        try { synthRef.current?.close(); } catch {}
         synthRef.current = null;
 
         const { token, region } = await getToken();
         const speechConfig = sdk.SpeechConfig.fromAuthorizationToken(token, region);
         speechConfig.speechSynthesisVoiceName = voice;
-        // Speed tweak (SSML rate) – we’ll do it via SSML below
 
-        // Output: system default speaker
-        const audioConfig = muted
-          ? null // don’t play audio when muted
-          : sdk.AudioConfig.fromDefaultSpeakerOutput();
-
+        const audioConfig = muted ? null : sdk.AudioConfig.fromDefaultSpeakerOutput();
         const synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig || undefined);
         synthRef.current = synthesizer;
 
-        // Request visemes
         synthesizer.visemeReceived = (_s, e) => {
-          // e.visemeId matches Azure tables; bucket to mouth shapes
           const shape = mapAzureVisemeToShape(e.visemeId);
           setMouthShape(shape, 1.0);
-          // short hold then relax (helps consonants)
           setTimeout(() => clearAllMouth(), 70);
         };
 
-        // Build SSML so we can control speaking rate (keeps lips closer to audio pace)
         const ssml = `
 <speak version="1.0" xml:lang="en-US">
   <voice name="${voice}">
-    <prosody rate="${rate}">${text.replace(/&/g, "&amp;")}</prosody>
+    <prosody rate="${rate}">${(text || "").replace(/&/g, "&amp;")}</prosody>
   </voice>
 </speak>`.trim();
 
         await new Promise((resolve) => {
           synthesizer.speakSsmlAsync(
             ssml,
-            result => {
-              synthesizer.close();
+            () => {
+              try { synthesizer.close(); } catch {}
               synthRef.current = null;
               resolve(true);
             },
-            error => {
-              console.error("Azure speak error:", error);
-              synthesizer.close();
+            (err) => {
+              console.error("Azure speak error:", err);
+              try { synthesizer.close(); } catch {}
               synthRef.current = null;
               resolve(false);
             }
@@ -226,6 +224,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
         clearAllMouth();
       } catch (err) {
         console.error("Azure synth failed:", err);
+        throw err;
       }
     },
   }));
@@ -245,14 +244,18 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     cam.position.set(0, 1.45, cameraZ);
     cameraRef.current = cam;
 
-    scene.add(new THREE.DirectionalLight(0xffffff, 1.1)).position.set(0.5, 1.2, 0.8);
-    scene.add(new THREE.DirectionalLight(0xffffff, 0.6)).position.set(-0.5, 0.8, -0.6);
+    const key = new THREE.DirectionalLight(0xffffff, 1.1);
+    key.position.set(0.5, 1.2, 0.8);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+    fill.position.set(-0.5, 0.8, -0.6);
+    scene.add(fill);
     scene.add(new THREE.AmbientLight(0xffffff, 0.6 * envIntensity));
 
     if (showFloor) {
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 1 })
+        new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 1 })
       );
       floor.rotation.x = -Math.PI / 2;
       floor.receiveShadow = true;
@@ -264,18 +267,24 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
       avatarUrl,
       (gltf) => {
         const root = gltf.scene;
-        root.traverse(o => (o.frustumCulled = false));
+        root.traverse((o) => (o.frustumCulled = false));
         root.rotation.y = modelRotationY;
         root.scale.setScalar(modelScale);
         root.position.y = modelY;
 
-        // Register morph targets
+        // collect morphs
         root.traverse((obj) => {
           if (obj.isMesh || obj.isSkinnedMesh) registerMorphTargets(obj);
         });
 
         scene.add(root);
         avatarRootRef.current = root;
+
+        // *** center and frame the model for full-body view ***
+        frameModel(root, cam, 1.18);
+
+        // first expression
+        setExpression(initialExpression);
       },
       undefined,
       (err) => console.error("Failed to load avatar:", err)
@@ -287,18 +296,17 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
       glowTRef.current += dt;
 
       if (avatarRootRef.current) {
-        // idle micro motion
+        // subtle idle motion
         avatarRootRef.current.rotation.x = Math.sin(tRef.current * 0.6) * 0.02;
         // listening pulse
         const s = listeningGlow ? 1 + Math.sin(glowTRef.current * 3.0) * 0.012 : 1;
-        avatarRootRef.current.scale.setScalar(modelScale * s);
+        avatarRootRef.current.scale.setScalar(s);
       }
 
-      // fallback text timeline
+      // fallback timeline
       const v = visemesRef.current;
       if (v.active && v.timeline.length) {
-        const now = performance.now();
-        const elapsed = now - v.startedAt;
+        const elapsed = performance.now() - v.startedAt;
         let key = null;
         for (let i = v.timeline.length - 1; i >= 0; i--) {
           if (elapsed >= v.timeline[i].time) { key = v.timeline[i]; break; }
@@ -319,14 +327,24 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     };
     rafRef.current = requestAnimationFrame(tick);
 
+    // handle resize so the canvas aspect stays correct
+    const onResize = () => {
+      const r = canvas.getBoundingClientRect();
+      const w = Math.round(r.width || width);
+      const h = Math.round(r.height || height);
+      renderer.setSize(w, h, false);
+      cam.aspect = w / h;
+      cam.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", onResize);
+
     return () => {
+      window.removeEventListener("resize", onResize);
       cancelAnimationFrame(rafRef.current);
+      try { synthRef.current?.close(); } catch {}
       renderer.dispose();
     };
-  }, [
-    avatarUrl, width, height, cameraZ, modelScale, modelY,
-    modelRotationY, showFloor, envIntensity, listeningGlow
-  ]);
+  }, [avatarUrl, width, height, cameraZ, modelScale, modelY, modelRotationY, showFloor, envIntensity, listeningGlow, initialExpression]);
 
   return <canvas ref={canvasRef} width={width} height={height} style={{ width, height, display: "block" }} />;
 });
