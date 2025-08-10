@@ -7,6 +7,9 @@ import React, {
 } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+// ADD this import near the top with your other imports
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+
 
 /** Build a conservative (slower) viseme timeline as fallback (when TTS boundaries aren’t available) */
 function buildVisemeTimelineFromText(text, totalMs = null) {
@@ -186,25 +189,30 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
     setExpression,
     wave,
     nod,
-    /** Start slow fallback timeline */
+    // Start slow fallback timeline
     driveMouthStart: (text, totalMsFallback) => {
-      const tl = buildVisemeTimelineFromText(text, totalMsFallback);
-      visemesRef.current.timeline = tl;
-      visemesRef.current.startedAt = performance.now();
-      visemesRef.current.active = true;
+        const tl = buildVisemeTimelineFromText(text, totalMsFallback);
+        visemesRef.current.timeline = tl;
+        visemesRef.current.startedAt = performance.now();
+        visemesRef.current.active = true;
     },
-    /** Real-time mouth from TTS boundaries */
+    // 🔧 Back-compat alias so App.js won't crash (this was causing the white screen)
+    driveMouthFromText: (text, totalMsFallback) => {
+        const tl = buildVisemeTimelineFromText(text, totalMsFallback);
+        visemesRef.current.timeline = tl;
+        visemesRef.current.startedAt = performance.now();
+        visemesRef.current.active = true;
+    },
+    // Real-time mouth from TTS boundaries
     setMouthByChar: (ch) => {
-      const shape = charToShape(ch);
-      setMouthShape(shape, 1.0);
-      // Optional: auto-clear after ~90ms to avoid sticking if boundary gaps are large
-      // setTimeout(() => clearAllMouth(), 90);
+        const shape = charToShape(ch);
+        setMouthShape(shape, 1.0);
     },
     stopMouth: () => {
-      visemesRef.current.active = false;
-      clearAllMouth();
+        visemesRef.current.active = false;
+        clearAllMouth();
     },
-  }));
+    }));
 
   useEffect(() => {
     const canvas = canvasRef.current;
