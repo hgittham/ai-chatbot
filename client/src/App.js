@@ -142,7 +142,7 @@ export default function ChatbotPage() {
       {/* 3 columns on desktop; stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto items-start">
         {/* LEFT — Avatar panel (nudged up with negative margin) */}
-        <div className="flex flex-col items-center gap-3 self-start -mt-4">
+        <div className="flex flex-col items-center gap-3 self-start -mt-6">
           {/* Mobile-only: center links above avatar */}
           <div className="md:hidden w-full flex flex-col items-center text-center mb-2">
             <Links />
