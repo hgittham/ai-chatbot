@@ -153,7 +153,7 @@ export default function ChatbotPage() {
             avatarUrl="/avatars/husain.glb"
             /* Shorter canvas + closer framing */
             width={320}
-            height={440}
+            height={400}
             cameraZ={1.85}
             modelScale={1.14}
             modelY={-0.44}
