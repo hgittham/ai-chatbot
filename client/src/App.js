@@ -12,9 +12,10 @@ export default function ChatbotPage() {
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [captions, setCaptions] = useState(""); // captions under avatar
+  const [captions, setCaptions] = useState("");
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef(crypto.randomUUID());
+  const avatarRef = useRef(null);
 
   // API
   const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
@@ -35,7 +36,7 @@ export default function ChatbotPage() {
   }, []);
 
   const speak = (text) => {
-    setCaptions(text); // show what’s being said
+    setCaptions(text);
     if (muted || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -44,9 +45,6 @@ export default function ChatbotPage() {
     u.pitch = 1.0;
     window.speechSynthesis.speak(u);
   };
-
-  // Avatar ref
-  const avatarRef = useRef(null);
 
   // Send a message
   const sendMessage = async (text) => {
@@ -113,36 +111,75 @@ export default function ChatbotPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reusable Links block
+  const Links = ({ className = "" }) => (
+    <div className={`flex flex-wrap gap-3 ${className}`}>
+      <a
+        href="/Resume_Husain_Gittham.pdf"
+        download="Husain_Gittham_Resume.pdf"
+        className="text-blue-400 underline"
+      >
+        📄 View my Resume
+      </a>
+      <a
+        href="https://www.linkedin.com/in/husain-gittham-428b51169/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-400 underline"
+      >
+        💼 Visit my LinkedIn Profile
+      </a>
+      <a
+        href="https://www.linkedin.com/in/husain-gittham-428b51169/details/recommendations/?detailScreenTabIndex=0"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-400 underline"
+      >
+        🌟 View my Recommendations
+      </a>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-black text-white px-4 md:px-6 lg:px-8 py-4">
-      {/* tighter header spacing */}
-      <h1 className="text-3xl font-extrabold text-center mb-4">
+    <div className="min-h-screen bg-black text-white px-4 md:px-6 lg:px-8 py-3">
+      {/* tighter header */}
+      <h1 className="text-3xl font-extrabold text-center mb-3">
         🤖 Talk to Husain's AI Clone
       </h1>
 
-      {/* Desktop: 3 columns. Mobile: stacked. */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {/* LEFT — Avatar + controls */}
-        <div className="flex flex-col items-center gap-3">
+      {/* Desktop-only LINKS ABOVE CHAT (center column) */}
+      <div className="hidden md:flex justify-center mb-3">
+        <Links />
+      </div>
+
+      {/* 3 columns on desktop; stacked on mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto items-start">
+        {/* LEFT — Avatar panel (pulled to top with self-start) */}
+        <div className="flex flex-col items-center gap-3 self-start">
+          {/* Mobile-only LINKS ABOVE AVATAR */}
+          <div className="md:hidden w-full flex justify-center mb-2">
+            <Links />
+          </div>
+
           <TalkingAvatar
             ref={avatarRef}
             avatarUrl="/avatars/husain.glb"
-            width={380}
-            height={560}
-            cameraZ={2.1}     // show more body
-            modelScale={1.05}
-            modelY={-0.35}
+            width={360}
+            height={520}
+            cameraZ={2.0}     // a bit closer
+            modelScale={1.07}
+            modelY={-0.38}
             listeningGlow={listening}
             initialExpression="neutral"
             showFloor={false}
           />
 
-          {/* Captions */}
+          {/* Captions (shorter, scrollable) */}
           <div className="w-full max-w-xs text-center text-gray-200 bg-gray-900/70 border border-gray-700 rounded p-2">
-            <div className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+            <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">
               Captions
             </div>
-            <div className="text-sm">{captions || "…"}</div>
+            <div className="text-sm max-h-20 overflow-y-auto">{captions || "…"}</div>
           </div>
 
           {/* Mic + Mute */}
@@ -176,43 +213,11 @@ export default function ChatbotPage() {
           <div className="text-xs text-gray-400">
             Pro tip: manage your <strong>speaker volume</strong> before talking.
           </div>
-
-          {/* Mobile hint */}
-          <div className="md:hidden text-sm text-gray-300 mt-1">
-            👇 Scroll down to chat with the clone.
-          </div>
-
-          {/* Links */}
-          <div className="flex flex-wrap gap-3 justify-center mt-2">
-            <a
-              href="/Resume_Husain_Gittham.pdf"
-              download="Husain_Gittham_Resume.pdf"
-              className="text-blue-400 underline"
-            >
-              📄 View my Resume
-            </a>
-            <a
-              href="https://www.linkedin.com/in/husain-gittham-428b51169/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 underline"
-            >
-              💼 Visit my LinkedIn Profile
-            </a>
-            <a
-              href="https://www.linkedin.com/in/husain-gittham-428b51169/details/recommendations/?detailScreenTabIndex=0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 underline"
-            >
-              🌟 View my Recommendations
-            </a>
-          </div>
         </div>
 
-        {/* MIDDLE — Chat */}
-        <div className="flex flex-col gap-4">
-          <div className="bg-gray-900 p-4 rounded-lg h-[32rem] overflow-y-auto space-y-2">
+        {/* MIDDLE — Chat box */}
+        <div className="flex flex-col gap-3">
+          <div className="bg-gray-900 p-4 rounded-lg h-[30rem] overflow-y-auto space-y-2">
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
                 ➡️ <strong>{m.role === "user" ? "You" : "Husain"}:</strong> {m.content}
@@ -329,7 +334,6 @@ function FeedbackFeed({ apiBase }) {
     return () => clearInterval(id);
   }, []);
 
-  // Format UTC timestamp to America/New_York and label ET
   const fmtET = (iso) => {
     try {
       const s = new Date(iso).toLocaleString("en-US", {
@@ -347,7 +351,7 @@ function FeedbackFeed({ apiBase }) {
   };
 
   return (
-    <div className="space-y-2 max-h-[34rem] overflow-y-auto">
+    <div className="space-y-2 max-h-[30rem] overflow-y-auto">
       {items.length === 0 && (
         <div className="text-gray-400 text-sm">No feedback yet. Be the first!</div>
       )}
@@ -363,3 +367,4 @@ function FeedbackFeed({ apiBase }) {
     </div>
   );
 }
+
