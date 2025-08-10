@@ -1,8 +1,9 @@
 // === React Chatbot Frontend ===
-// Text input, mic input, TTS output, public feedback wall
+// Text input, mic input, TTS output, avatar lip-sync, public feedback wall
 /* global webkitSpeechRecognition */
 
 import { useState, useRef, useEffect } from "react";
+import TalkingAvatar from "./components/TalkingAvatar";
 
 export default function ChatbotPage() {
   // ---- Voice (Indian-accent English preference) ----
@@ -14,6 +15,10 @@ export default function ChatbotPage() {
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef(crypto.randomUUID());
+
+  // ---- Avatar + Audio ----
+  const avatarRef = useRef(null);
+  const [muted, setMuted] = useState(false);
 
   // ---- API ----
   const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
@@ -37,7 +42,7 @@ export default function ChatbotPage() {
   }, []);
 
   const speak = (text) => {
-    if (!window.speechSynthesis) return;
+    if (muted || !window.speechSynthesis) return; // respect mute
     window.speechSynthesis.cancel(); // avoid double playback
     const u = new SpeechSynthesisUtterance(text);
     if (preferredVoice) u.voice = preferredVoice;
@@ -77,7 +82,12 @@ export default function ChatbotPage() {
     const replyText = data?.response || "Sorry, I didn't catch that.";
     const reply = { role: "bot", content: replyText };
     setMessages([...updatedMessages, reply]);
-    speak(replyText);
+
+    // Drive avatar mouth + (optionally) TTS
+    avatarRef.current?.setExpression("happy");
+    avatarRef.current?.wave();
+    avatarRef.current?.driveMouthFromText(replyText);  // animate lips
+    speak(replyText);                                  // speak unless muted (handled in speak)
   };
 
   // ---- Mic ----
@@ -111,6 +121,9 @@ export default function ChatbotPage() {
       "Hi there! I’m Husain’s AI clone — think of me as his digital twin, but with faster responses and zero need for sleep. I’m glad you’re here. How are you doing today?";
     const reply = { role: "bot", content: initialGreeting };
     setMessages([reply]);
+
+    // Avatar: greet + lip-sync + optional speech
+    avatarRef.current?.driveMouthFromText(initialGreeting);
     speak(initialGreeting);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // run once
@@ -118,6 +131,34 @@ export default function ChatbotPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center p-6 space-y-6">
       <h1 className="text-3xl font-bold">🤖 Talk to Husain's AI Clone</h1>
+
+      {/* Avatar + Mute */}
+      <div className="flex items-center gap-4">
+        <TalkingAvatar
+          ref={avatarRef}
+          avatarUrl="/avatars/husain.glb"
+          // For Ready Player Me, you can use the hosted URL and (if needed) headers:
+          // avatarUrl="https://api.readyplayer.me/v2/avatars/<your-id>.glb"
+          // requestHeaders={{ "X-API-Key": process.env.REACT_APP_RPM_API_KEY }}
+          width={300}
+          height={360}
+          initialExpression="neutral"
+        />
+        <button
+          onClick={() => {
+            setMuted((m) => {
+              const next = !m;
+              if (next && window.speechSynthesis) window.speechSynthesis.cancel();
+              if (next) avatarRef.current?.stopMouth();
+              return next;
+            });
+          }}
+          className={`px-4 py-2 rounded ${muted ? "bg-gray-700" : "bg-red-600"}`}
+          title={muted ? "Unmute voice" : "Mute voice"}
+        >
+          {muted ? "🔇 Muted" : "🔊 Mute"}
+        </button>
+      </div>
 
       {/* Links */}
       <div className="flex flex-wrap gap-4 justify-center">
@@ -181,7 +222,7 @@ export default function ChatbotPage() {
       <div className="w-full max-w-xl mt-10 border-t border-gray-800 pt-6">
         <h2 className="text-2xl font-semibold mb-1">💬 Feedback & Suggestions</h2>
         <p className="text-sm text-gray-400 mb-4">
-          Share public feedback about the site. Ideas, bugs, and critique are welcome — everyone can see it.
+          Would love to hear some critical feedback to make this chatbot better. Share public feedback - Ideas, bugs, critique's are welcome.
         </p>
 
         <div className="space-y-3 bg-gray-950/60 p-4 rounded-lg border border-gray-800">
