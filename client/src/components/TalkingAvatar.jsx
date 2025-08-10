@@ -163,7 +163,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
           VRMUtils.removeUnnecessaryJoints(gltf.scene);
           const vrm = await VRM.from(gltf);
           vrm.scene.traverse((o) => (o.frustumCulled = false));
-          vrm.scene.rotation.y = Math.PI;
+          vrm.scene.rotation.y = 0;
           scene.add(vrm.scene);
           vrmRef.current = vrm;
           gltfRootRef.current = null;
@@ -173,7 +173,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
           // Fallback: plain GLTF scene (visible, but no VRM lipsync/expressions)
           console.warn("Not a VRM; using plain GLTF scene (no lip‑sync).", e);
           gltf.scene.traverse((o) => (o.frustumCulled = false));
-          gltf.scene.rotation.y = Math.PI;
+          gltf.scene.rotation.y = 0;
           scene.add(gltf.scene);
           vrmRef.current = null;
           gltfRootRef.current = gltf.scene;
