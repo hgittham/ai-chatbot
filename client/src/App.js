@@ -13,10 +13,12 @@ export default function ChatbotPage() {
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef(crypto.randomUUID());
   const avatarRef = useRef(null);
+  const audioUnlockedRef = useRef(false); // iOS/Safari unlock
 
   const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
   const API_BASE = API_URL.replace(/\/chat$/, "");
 
+  // ---------- Voice selection (prefer Indian English) ----------
   useEffect(() => {
     const pickVoice = () => {
       const v = window.speechSynthesis?.getVoices?.() || [];
@@ -30,17 +32,62 @@ export default function ChatbotPage() {
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = pickVoice;
   }, []);
 
+  // ---------- iOS/Safari audio unlock ----------
+  const unlockAudioForiOS = () => {
+    if (audioUnlockedRef.current) return;
+    try {
+      // 1) Kick a silent AudioContext to route to speaker
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        if (ctx.state === "suspended") ctx.resume();
+        source.start(0);
+      }
+      // 2) Nudge TTS engine
+      if (window.speechSynthesis?.resume) {
+        window.speechSynthesis.resume();
+      }
+      audioUnlockedRef.current = true;
+    } catch {
+      // ignore
+    }
+  };
+
+  // one-time global unlock on first user gesture
+  useEffect(() => {
+    const onFirstInteract = () => {
+      unlockAudioForiOS();
+      window.removeEventListener("touchstart", onFirstInteract, true);
+      window.removeEventListener("click", onFirstInteract, true);
+    };
+    window.addEventListener("touchstart", onFirstInteract, true);
+    window.addEventListener("click", onFirstInteract, true);
+    return () => {
+      window.removeEventListener("touchstart", onFirstInteract, true);
+      window.removeEventListener("click", onFirstInteract, true);
+    };
+  }, []);
+
+  // ---------- TTS with captions ----------
   const speak = (text) => {
-    setCaptions(text); // show full text; no scroll box
+    setCaptions(text); // show full captions (no scroll)
     if (muted || !window.speechSynthesis) return;
+    unlockAudioForiOS();
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     if (preferredVoice) u.voice = preferredVoice;
     u.rate = 0.95;
     u.pitch = 1.0;
+    // In case iOS paused engine:
+    if (window.speechSynthesis?.paused) window.speechSynthesis.resume();
     window.speechSynthesis.speak(u);
   };
 
+  // ---------- Chat send ----------
   const sendMessage = async (text) => {
     if (!text?.trim()) return;
     const newMsg = { role: "user", content: text.trim() };
@@ -69,11 +116,13 @@ export default function ChatbotPage() {
     speak(replyText);
   };
 
+  // ---------- Mic ----------
   const toggleMic = () => {
     if (!("webkitSpeechRecognition" in window)) {
       alert("Your browser doesn't support voice recognition");
       return;
     }
+    unlockAudioForiOS(); // make sure audio path is unlocked when user taps Talk
     if (listening) {
       recognitionRef.current?.stop();
       setListening(false);
@@ -93,6 +142,7 @@ export default function ChatbotPage() {
     setListening(true);
   };
 
+  // ---------- Initial greeting ----------
   useEffect(() => {
     const initial =
       "Hi there! I’m Husain’s AI clone — think of me as his digital twin, but with faster responses and zero need for sleep. I’m glad you’re here. How are you doing today?";
@@ -102,12 +152,19 @@ export default function ChatbotPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const Links = ({ className = "" }) => (
-    <div className={`flex flex-wrap gap-3 ${className}`}>
+  // ---------- Links (stacked prop for mobile) ----------
+  const Links = ({ stacked = false, className = "" }) => (
+    <div
+      className={`${className} ${
+        stacked
+          ? "flex flex-col w-full items-center space-y-2"
+          : "flex flex-wrap gap-3 items-center justify-center"
+      }`}
+    >
       <a
         href="/Resume_Husain_Gittham.pdf"
         download="Husain_Gittham_Resume.pdf"
-        className="text-blue-400 underline"
+        className={`text-blue-400 underline ${stacked ? "w-full text-center py-1" : ""}`}
       >
         📄 View my Resume
       </a>
@@ -115,7 +172,7 @@ export default function ChatbotPage() {
         href="https://www.linkedin.com/in/husain-gittham-428b51169/"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-400 underline"
+        className={`text-blue-400 underline ${stacked ? "w-full text-center py-1" : ""}`}
       >
         💼 Visit my LinkedIn Profile
       </a>
@@ -123,7 +180,7 @@ export default function ChatbotPage() {
         href="https://www.linkedin.com/in/husain-gittham-428b51169/details/recommendations/?detailScreenTabIndex=0"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-400 underline"
+        className={`text-blue-400 underline ${stacked ? "w-full text-center py-1" : ""}`}
       >
         🌟 View my Recommendations
       </a>
@@ -134,26 +191,25 @@ export default function ChatbotPage() {
     <div className="min-h-screen bg-black text-white px-4 md:px-6 lg:px-8 py-3">
       <h1 className="text-3xl font-extrabold text-center mb-3">🤖 Talk to Husain's AI Clone</h1>
 
-      {/* Desktop-only: links above chat, centered */}
+      {/* Desktop-only links above chat */}
       <div className="hidden md:flex justify-center mb-3">
         <Links />
       </div>
 
       {/* 3 columns on desktop; stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto items-start">
-        {/* LEFT — Avatar panel (nudged up with negative margin) */}
-        <div className="flex flex-col items-center gap-3 self-start -mt-6">
-          {/* Mobile-only: center links above avatar */}
-          <div className="md:hidden w-full flex flex-col items-center text-center mb-2">
-            <Links />
+        {/* LEFT — Avatar panel */}
+        <div className="flex flex-col items-center gap-3 self-start -mt-4">
+          {/* Mobile-only: stacked, centered links above avatar */}
+          <div className="md:hidden w-full text-center mb-2">
+            <Links stacked />
           </div>
 
           <TalkingAvatar
             ref={avatarRef}
             avatarUrl="/avatars/husain.glb"
-            /* Shorter canvas + closer framing */
             width={320}
-            height={400}
+            height={440}
             cameraZ={1.85}
             modelScale={1.14}
             modelY={-0.44}
@@ -162,7 +218,7 @@ export default function ChatbotPage() {
             showFloor={false}
           />
 
-          {/* Captions: no scrollbar; expand to content */}
+          {/* Captions: full text, no scrollbar */}
           <div className="w-full max-w-xs text-center text-gray-200 bg-gray-900/70 border border-gray-700 rounded p-2">
             <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-1">Captions</div>
             <div className="text-sm whitespace-pre-wrap">{captions || "…"}</div>
