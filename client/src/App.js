@@ -2,6 +2,8 @@
 /* global webkitSpeechRecognition */
 import { useState, useRef, useEffect } from "react";
 import TalkingAvatar from "./components/TalkingAvatar";
+import { useState as useState2, useEffect as useEffect2 } from "react";
+
 
 export default function ChatbotPage() {
   const [messages, setMessages] = useState([]);
@@ -325,7 +327,6 @@ export default function ChatbotPage() {
 
 /* ----------------- Feedback Components ----------------- */
 
-import { useState as useState2, useEffect as useEffect2 } from "react";
 
 function FeedbackForm({ apiBase }) {
   const [name, setName] = useState2("");
