@@ -12,7 +12,7 @@ export default function ChatbotPage() {
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [captions, setCaptions] = useState(""); // NEW: captions under avatar
+  const [captions, setCaptions] = useState(""); // captions under avatar
   const recognitionRef = useRef(null);
   const sessionIdRef = useRef(crypto.randomUUID());
 
@@ -114,135 +114,131 @@ export default function ChatbotPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <h1 className="text-3xl font-extrabold text-center mb-6">
+    <div className="min-h-screen bg-black text-white px-4 md:px-6 lg:px-8 py-4">
+      {/* tighter header spacing */}
+      <h1 className="text-3xl font-extrabold text-center mb-4">
         🤖 Talk to Husain's AI Clone
       </h1>
 
-      {/* Desktop: 2 columns (avatar+chat left, feedback right). Mobile: stacked. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-        {/* LEFT COLUMN — Avatar + controls + Chat */}
-        <div className="space-y-6">
-          {/* Avatar Panel */}
-          <div className="flex flex-col items-center gap-3">
-            <TalkingAvatar
-              ref={avatarRef}
-              avatarUrl="/avatars/husain.glb"
-              width={420}
-              height={600}
-              cameraZ={2.1}   // pull camera back to show more body
-              modelScale={1.05}
-              modelY={-0.35}  // lower a bit to include more torso/legs
-              listeningGlow={listening}
-              initialExpression="neutral"
-              showFloor={false}
-            />
+      {/* Desktop: 3 columns. Mobile: stacked. */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        {/* LEFT — Avatar + controls */}
+        <div className="flex flex-col items-center gap-3">
+          <TalkingAvatar
+            ref={avatarRef}
+            avatarUrl="/avatars/husain.glb"
+            width={380}
+            height={560}
+            cameraZ={2.1}     // show more body
+            modelScale={1.05}
+            modelY={-0.35}
+            listeningGlow={listening}
+            initialExpression="neutral"
+            showFloor={false}
+          />
 
-            {/* Captions */}
-            <div className="w-full max-w-md text-center text-gray-200 bg-gray-900/70 border border-gray-700 rounded p-2">
-              <div className="text-xs uppercase tracking-wide text-gray-400 mb-1">
-                Captions
-              </div>
-              <div className="text-sm">{captions || "…"}</div>
+          {/* Captions */}
+          <div className="w-full max-w-xs text-center text-gray-200 bg-gray-900/70 border border-gray-700 rounded p-2">
+            <div className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+              Captions
             </div>
-
-            {/* Mic + Mute + Note */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleMic}
-                className={`px-4 py-2 rounded font-semibold ${
-                  listening ? "bg-blue-600" : "bg-green-600"
-                }`}
-                title="Start voice input"
-              >
-                {listening ? "🎧 Listening…" : "🎙️ Talk to Husain"}
-              </button>
-
-              <button
-                onClick={() => {
-                  setMuted((m) => {
-                    const next = !m;
-                    if (next && window.speechSynthesis) window.speechSynthesis.cancel();
-                    if (next) avatarRef.current?.stopMouth();
-                    return next;
-                  });
-                }}
-                className={`px-4 py-2 rounded ${
-                  muted ? "bg-gray-700" : "bg-red-600"
-                }`}
-                title={muted ? "Unmute voice" : "Mute voice"}
-              >
-                {muted ? "🔇 Muted" : "🔊 Mute"}
-              </button>
-            </div>
-
-            <div className="text-xs text-gray-400">
-              Pro tip: manage your <strong>speaker volume</strong> before talking.
-            </div>
-
-            {/* Mobile hint */}
-            <div className="md:hidden text-sm text-gray-300 mt-1">
-              👇 Scroll down to chat with the clone.
-            </div>
-
-            {/* Links */}
-            <div className="flex flex-wrap gap-4 justify-center mt-2">
-              <a
-                href="/Resume_Husain_Gittham.pdf"
-                download="Husain_Gittham_Resume.pdf"
-                className="text-blue-400 underline"
-              >
-                📄 View my Resume
-              </a>
-              <a
-                href="https://www.linkedin.com/in/husain-gittham-428b51169/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 underline"
-              >
-                💼 Visit my LinkedIn Profile
-              </a>
-              <a
-                href="https://www.linkedin.com/in/husain-gittham-428b51169/details/recommendations/?detailScreenTabIndex=0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 underline"
-              >
-                🌟 View my Recommendations
-              </a>
-            </div>
+            <div className="text-sm">{captions || "…"}</div>
           </div>
 
-          {/* Chat */}
-          <div className="space-y-4">
-            <div className="bg-gray-900 p-4 rounded-lg h-96 overflow-y-auto space-y-2">
-              {messages.map((m, i) => (
-                <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
-                  ➡️ <strong>{m.role === "user" ? "You" : "Husain"}:</strong> {m.content}
-                </div>
-              ))}
-            </div>
+          {/* Mic + Mute */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleMic}
+              className={`px-4 py-2 rounded font-semibold ${
+                listening ? "bg-blue-600" : "bg-green-600"
+              }`}
+              title="Start voice input"
+            >
+              {listening ? "🎧 Listening…" : "🎙️ Talk to Husain"}
+            </button>
 
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
-                className="flex-1 px-4 py-2 text-black rounded"
-                placeholder="Type your question..."
-              />
-              <button onClick={() => sendMessage(input)} className="bg-green-500 px-4 py-2 rounded">
-                Send
-              </button>
-              <button onClick={toggleMic} className="bg-blue-500 px-4 py-2 rounded">
-                {listening ? "Stop" : "🎤 Talk"}
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setMuted((m) => {
+                  const next = !m;
+                  if (next && window.speechSynthesis) window.speechSynthesis.cancel();
+                  if (next) avatarRef.current?.stopMouth();
+                  return next;
+                });
+              }}
+              className={`px-4 py-2 rounded ${muted ? "bg-gray-700" : "bg-red-600"}`}
+              title={muted ? "Unmute voice" : "Mute voice"}
+            >
+              {muted ? "🔇 Muted" : "🔊 Mute"}
+            </button>
+          </div>
+
+          <div className="text-xs text-gray-400">
+            Pro tip: manage your <strong>speaker volume</strong> before talking.
+          </div>
+
+          {/* Mobile hint */}
+          <div className="md:hidden text-sm text-gray-300 mt-1">
+            👇 Scroll down to chat with the clone.
+          </div>
+
+          {/* Links */}
+          <div className="flex flex-wrap gap-3 justify-center mt-2">
+            <a
+              href="/Resume_Husain_Gittham.pdf"
+              download="Husain_Gittham_Resume.pdf"
+              className="text-blue-400 underline"
+            >
+              📄 View my Resume
+            </a>
+            <a
+              href="https://www.linkedin.com/in/husain-gittham-428b51169/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 underline"
+            >
+              💼 Visit my LinkedIn Profile
+            </a>
+            <a
+              href="https://www.linkedin.com/in/husain-gittham-428b51169/details/recommendations/?detailScreenTabIndex=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 underline"
+            >
+              🌟 View my Recommendations
+            </a>
           </div>
         </div>
 
-        {/* RIGHT COLUMN — Feedback */}
+        {/* MIDDLE — Chat */}
+        <div className="flex flex-col gap-4">
+          <div className="bg-gray-900 p-4 rounded-lg h-[32rem] overflow-y-auto space-y-2">
+            {messages.map((m, i) => (
+              <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
+                ➡️ <strong>{m.role === "user" ? "You" : "Husain"}:</strong> {m.content}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
+              className="flex-1 px-4 py-2 text-black rounded"
+              placeholder="Type your question..."
+            />
+            <button onClick={() => sendMessage(input)} className="bg-green-500 px-4 py-2 rounded">
+              Send
+            </button>
+            <button onClick={toggleMic} className="bg-blue-500 px-4 py-2 rounded">
+              {listening ? "Stop" : "🎤 Talk"}
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT — Feedback */}
         <div className="space-y-4">
           <div className="bg-gray-950/60 p-4 rounded-lg border border-gray-800">
             <h2 className="text-2xl font-semibold mb-1">💬 Feedback & Suggestions</h2>
@@ -333,7 +329,7 @@ function FeedbackFeed({ apiBase }) {
     return () => clearInterval(id);
   }, []);
 
-  // Format UTC timestamp to America/New_York and highlight ET
+  // Format UTC timestamp to America/New_York and label ET
   const fmtET = (iso) => {
     try {
       const s = new Date(iso).toLocaleString("en-US", {
@@ -344,14 +340,14 @@ function FeedbackFeed({ apiBase }) {
         month: "short",
         day: "2-digit",
       });
-      return `${s}  —  ` + `\u{1F4A1} ET`; // 💡 ET label
+      return `${s}  —  ET`;
     } catch {
       return iso;
     }
   };
 
   return (
-    <div className="space-y-2 max-h-[32rem] overflow-y-auto">
+    <div className="space-y-2 max-h-[34rem] overflow-y-auto">
       {items.length === 0 && (
         <div className="text-gray-400 text-sm">No feedback yet. Be the first!</div>
       )}
