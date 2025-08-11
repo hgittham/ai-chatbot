@@ -308,6 +308,20 @@ export default function ChatbotPage() {
         </div>
 
         {/* RIGHT — Feedback */}
+        <div className="bg-gray-950/60 p-3 rounded-lg border border-gray-800">
+          <h2 className="text-xl font-semibold mb-2">🔗 From LinkedIn</h2>
+          <div className="w-full overflow-hidden rounded">
+            <iframe
+              src="https://www.linkedin.com/embed/feed/update/urn:li:share:7360713923483869184"
+              title="Embedded LinkedIn post"
+              height="640"
+              width="100%"
+              frameBorder="0"
+              allowFullScreen
+              style={{ background: "transparent" }}
+            />
+          </div>
+        </div>
         <div className="space-y-4">
           <div className="bg-gray-950/60 p-4 rounded-lg border border-gray-800">
             <h2 className="text-2xl font-semibold mb-1">💬 Feedback & Suggestions</h2>
@@ -400,7 +414,9 @@ function FeedbackFeed({ apiBase }) {
 
   const fmtET = (iso) => {
     try {
-      const s = new Date(iso).toLocaleString("en-US", {
+      // if timestamp has no timezone, assume UTC
+      const utcish = /Z|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`;
+      const s = new Date(utcish).toLocaleString("en-US", {
         timeZone: "America/New_York",
         hour: "2-digit",
         minute: "2-digit",
@@ -413,6 +429,7 @@ function FeedbackFeed({ apiBase }) {
       return iso;
     }
   };
+
 
   return (
     <div className="space-y-2 max-h-[30rem] overflow-y-auto">

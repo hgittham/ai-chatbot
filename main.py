@@ -122,6 +122,11 @@ def search_kb(user_msg: str) -> str:
     except Exception:
         return ""
 
+# add near the other utils
+def utc_now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def get_location(ip: str) -> str:
     try:
         res = requests.get(f"https://ipapi.co/{ip}/json/", timeout=3).json()
@@ -140,7 +145,7 @@ def log_chat(session_id: str, ip: str, location: str, convo: list):
             "ip": ip,
             "location": location,
             "chat": convo,
-            "timestamp": datetime.datetime.utcnow().isoformat()
+            "timestamp": utc_now_iso()
         }
         with CHAT_LOG.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
@@ -174,7 +179,8 @@ async def post_feedback(item: FeedbackIn, request: Request):
     c = conn.cursor()
     c.execute(
         "INSERT INTO feedback (name, message, created_at) VALUES (?, ?, ?)",
-        (item.name or "", item.message.strip(), datetime.datetime.utcnow().isoformat())
+        (item.name or "", item.message.strip(), utc_now_iso()) 
+        # (item.name or "", item.message.strip(), datetime.datetime.utcnow().isoformat())
     )
     conn.commit()
     conn.close()
