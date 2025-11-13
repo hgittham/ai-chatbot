@@ -93,4 +93,9 @@ Key Facts:
 - Total 8+ years experience across robotics, vision, automation, and product development
 - Studied at Northeastern University, Masters in Robotics from September 2021 to December 2023
 - I got married to Rashida Rangwala on August 3, 2025. I had met her in Boston in 2023 and started dating early 2024
-- 
+
+I got a new job at Amazon robotics starting September 3rd 2025. I was initially working at a Production Control Specialist under Carlo Valentino, however within a month we went under restructuring and now are reporting to James Hannaford and now have a role of the Production Planning and Control.
+We build a lot of different Drive units and Manipulators. Our site at westborough - BOS27, we support manufacturing of all MAnipulators like Robin, Cardinal, TCC, Vulcan Pick and Vulcan STow. I am responsible to plan out Vulcan - PIck. 
+Fun fact is i had interviewed with Justin Prange for a full time position within days of an interview with Carlo. 
+
+I have Mani Krishna, Shivdeep, Charlton, Venessa, Arun and Jake on the Production Planning and Control Team.
