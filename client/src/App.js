@@ -16,7 +16,8 @@ export default function ChatbotPage() {
   const avatarRef = useRef(null);
   const audioUnlockedRef = useRef(false); // iOS/Safari unlock
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/chat";
+  const API_URL =
+    process.env.REACT_APP_API_URL || `${window.location.origin}/vertex/api/chat`;
   const API_BASE = API_URL.replace(/\/chat$/, "");
 
   // ---------- iOS/Safari audio unlock ----------
@@ -180,7 +181,7 @@ export default function ChatbotPage() {
       }`}
     >
       <a
-        href="/Resume_Husain_Gittham.pdf"
+        href={`${process.env.PUBLIC_URL}/Resume_Husain_Gittham.pdf`}
         download="Husain_Gittham_Resume.pdf"
         className={`text-blue-400 underline ${stacked ? "w-full text-center py-1" : ""}`}
       >
@@ -225,7 +226,7 @@ export default function ChatbotPage() {
 
           <TalkingAvatar
             ref={avatarRef}
-            avatarUrl="/avatars/husain.glb"
+            avatarUrl={`${process.env.PUBLIC_URL}/avatars/husain.glb`}
             width={320}
             height={440}
             cameraZ={1.85}

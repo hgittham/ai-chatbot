@@ -1,0 +1,18 @@
+{
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "build",
+  "rewrites": [
+    {
+      "source": "/vertex/api/(.*)",
+      "destination": "https://REPLACE_WITH_YOUR_RAILWAY_HOST/$1"
+    },
+    {
+      "source": "/vertex/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/vertex",
+      "destination": "/index.html"
+    }
+  ]
+}
