@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/vertex/api/(.*)",
-      "destination": "https://REPLACE_WITH_YOUR_RAILWAY_HOST/$1"
+      "destination": "https://api.maixed.com/$1"
     },
     {
       "source": "/vertex/(.*)",
