@@ -1,0 +1,16 @@
+node_modules
+client/node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+.env
+.env.*
+*.log
+Husain_video.mp4
+husain_audio.mp4
+chat_logs.json
+chat_logs.jsonl
+feedback.db
