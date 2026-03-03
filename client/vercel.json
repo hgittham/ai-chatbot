@@ -7,6 +7,10 @@
       "destination": "https://api.maixed.com/$1"
     },
     {
+      "source": "/api/(.*)",
+      "destination": "https://api.maixed.com/$1"
+    },
+    {
       "source": "/vertex/(.*)",
       "destination": "/index.html"
     },

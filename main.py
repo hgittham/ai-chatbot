@@ -15,6 +15,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set")
 
+# Prefer a broadly available default model; override with OPENAI_MODEL in env.
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 # Comma-separated list of allowed origins, e.g. "https://maixed.com,https://www.maixed.com"
 ALLOW_ORIGINS = [
     o.strip() for o in os.getenv("ALLOW_ORIGINS", "*").split(",")
@@ -237,7 +240,7 @@ async def chat(msg: ChatMessage, request: Request):
 
         # Call OpenAI
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model=OPENAI_MODEL,
             messages=messages
         )
         reply = completion.choices[0].message.content.strip()
@@ -252,4 +255,6 @@ async def chat(msg: ChatMessage, request: Request):
         return {"response": reply, "session_id": session_id}
 
     except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+        # Bubble up provider errors with useful diagnostics for production debugging.
+        detail = getattr(e, "message", None) or str(e) or "Unknown error"
+        return JSONResponse({"error": detail, "model": OPENAI_MODEL}, status_code=500)
