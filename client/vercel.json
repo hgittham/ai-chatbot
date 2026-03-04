@@ -7,16 +7,16 @@
       "destination": "https://api.maixed.com/$1"
     },
     {
-      "source": "/api/(.*)",
-      "destination": "https://api.maixed.com/$1"
+      "source": "/vertex",
+      "destination": "/api/vertex-gate"
     },
     {
       "source": "/vertex/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/vertex-gate"
     },
     {
-      "source": "/vertex",
-      "destination": "/index.html"
+      "source": "/api/(.*)",
+      "destination": "https://api.maixed.com/$1"
     }
   ]
 }
