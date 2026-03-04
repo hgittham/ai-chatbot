@@ -5,7 +5,7 @@ import TalkingAvatar from "./components/TalkingAvatar";
 import { useState as useState2, useEffect as useEffect2 } from "react";
 
 
-export default function ChatbotPage() {
+function ChatbotPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
@@ -17,7 +17,7 @@ export default function ChatbotPage() {
   const audioUnlockedRef = useRef(false); // iOS/Safari unlock
 
   const API_URL =
-    process.env.REACT_APP_API_URL || `${window.location.origin}/vertex/api/chat`;
+    process.env.REACT_APP_API_URL || `${window.location.origin}/api/chat`;
   const API_BASE = API_URL.replace(/\/chat$/, "");
 
   // ---------- iOS/Safari audio unlock ----------
@@ -448,4 +448,45 @@ function FeedbackFeed({ apiBase }) {
       ))}
     </div>
   );
+}
+
+function VertexOpenClawPage() {
+  const target = process.env.REACT_APP_OPENCLAW_URL || "";
+
+  useEffect(() => {
+    if (target) {
+      window.location.replace(target);
+    }
+  }, [target]);
+
+  return (
+    <div className="min-h-screen bg-black text-white grid place-items-center p-6">
+      <div className="max-w-xl text-center space-y-4">
+        <h1 className="text-3xl font-bold">Opening OpenClaw…</h1>
+        {target ? (
+          <p className="text-gray-300">If you are not redirected automatically, use the button below.</p>
+        ) : (
+          <p className="text-red-300">
+            OpenClaw URL is not configured. Set <code>REACT_APP_OPENCLAW_URL</code> in Vercel.
+          </p>
+        )}
+        {target && (
+          <a
+            href={target}
+            className="inline-block bg-green-600 hover:bg-green-700 px-5 py-3 rounded font-semibold"
+          >
+            Open OpenClaw
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const path = (window.location.pathname || "").toLowerCase();
+  if (path === "/vertex" || path.startsWith("/vertex/")) {
+    return <VertexOpenClawPage />;
+  }
+  return <ChatbotPage />;
 }

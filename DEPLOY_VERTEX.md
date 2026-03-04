@@ -34,6 +34,14 @@ In Vercel project:
 After DNS propagates, open:
 - `https://www.maixed.com/vertex`
 
+## OpenClaw handoff at /vertex
+
+`/vertex` can act as an OpenClaw launcher page.
+Set this in Vercel (frontend project env var):
+- `REACT_APP_OPENCLAW_URL=https://<your-openclaw-webchat-or-control-url>`
+
+When set, the `/vertex` page auto-redirects to OpenClaw and also shows a manual button fallback.
+
 ## 4) Quick checks
 
 - Frontend loads: `https://www.maixed.com/vertex`
