@@ -344,7 +344,7 @@ const TalkingAvatar = forwardRef(function TalkingAvatar(
       try { synthRef.current?.close(); } catch {}
       renderer.dispose();
     };
-  }, [avatarUrl, width, height, cameraZ, modelScale, modelY, modelRotationY, showFloor, envIntensity, listeningGlow, initialExpression]);
+  }, [avatarUrl, width, height, cameraZ, modelScale, modelY, modelRotationY, showFloor, envIntensity, listeningGlow, initialExpression, registerMorphTargets, setExpression]);
 
   return <canvas ref={canvasRef} width={width} height={height} style={{ width, height, display: "block" }} />;
 });
